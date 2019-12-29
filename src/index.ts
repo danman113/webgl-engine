@@ -64,7 +64,7 @@ window.onload = () => {
 
   let a = 0.1
 
-  engine.draw = (gl) => {
+  engine.draw = (gl, { settings: { width, height } } : Engine) => {
     const { shaderPrograms, buffers } = engine
     const { attribLocations, uniformLocations } = shaderPrograms['simple']
     a += 0.01
@@ -87,7 +87,8 @@ window.onload = () => {
     // and 100 units away from the camera.
 
     const fieldOfView = 90 * Math.PI / 180   // in radians
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
+    const aspect = width / height
+    console.log(aspect)
     const zNear = 0.1
     const zFar = 100.0
     const projectionMatrix = mat4.create()
@@ -186,8 +187,6 @@ window.onload = () => {
         }, shaderPrograms.simple)
         gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
       }
-
-
     }
   }
 

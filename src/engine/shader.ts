@@ -34,7 +34,6 @@ export default class ShaderProgram {
 
   getAttribLocation  = (name: string) => {
     const { attribLocations } = this
-    console.log()
     if (attribLocations[name] >= 0) {
       return attribLocations[name]
     } else {

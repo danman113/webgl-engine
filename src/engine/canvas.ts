@@ -1,29 +1,15 @@
-import { debounce } from 'lodash'
-
 export interface CanvasSettings {
   width?: number;
   height?: number;
   fullscreen?: boolean;
 }
 
-const setCanvasDimensions = (element: HTMLCanvasElement, maxWidth: number, maxHeight: number) => {
-  element.width = maxWidth
-  element.height = maxHeight
-  element.style.width = `${maxWidth}`
-  element.style.height = `${maxHeight}`
-}
-
-const setCanvasSize = (element: HTMLCanvasElement, settings: CanvasSettings) => {
-  if (!!settings.fullscreen) {
-    const maxWidth = window.innerWidth
-    const maxHeight = window.innerHeight
-    setCanvasDimensions(element, maxWidth, maxHeight)
-    window.addEventListener('resize', debounce(() => {
-      setCanvasSize(element, settings)
-    }, 500))
-  } else {
-    setCanvasDimensions(element, settings.width, settings.height)
-  }
+export const setCanvasDimensions = (element: HTMLCanvasElement, { height, width } : CanvasSettings) => {
+  console.log(width, height)
+  element.width = width
+  element.height = height
+  element.style.width = `${width}`
+  element.style.height = `${height}`
 }
 
 const getWebglContext = (element: HTMLCanvasElement): WebGLRenderingContext => {
@@ -36,7 +22,7 @@ const getWebglContext = (element: HTMLCanvasElement): WebGLRenderingContext => {
 }
 
 const setupWebglCanvas = (element: HTMLCanvasElement, settings: CanvasSettings): WebGLRenderingContext => {
-  setCanvasSize(element, settings)
+  setCanvasDimensions(element, settings)
   return getWebglContext(element)
 }
 

@@ -1,4 +1,6 @@
-import setupWebglCanvas, { CanvasSettings } from './canvas'
+import { debounce } from 'lodash'
+
+import setupWebglCanvas, { CanvasSettings, setCanvasDimensions } from './canvas'
 import ShaderProgram, { ShaderTypes } from './shader'
 
 interface EngineSettings extends CanvasSettings {
@@ -35,8 +37,21 @@ export default class Engine {
   public canvasSettings: CanvasSettings
 
   private RAF: number
-  constructor (element: HTMLCanvasElement, settings: EngineSettings) {
+
+  private fullscreenCanvasAdjust = () => {
+    this.settings.width = window.innerWidth
+    this.settings.height = window.innerHeight
+    this.onResize(this.gl, this)
+    setCanvasDimensions(this.element, this.settings)
+  }
+  constructor (public element: HTMLCanvasElement, public settings: EngineSettings) {
     this.gl = setupWebglCanvas(element, settings)
+    if (settings.fullscreen) {
+      this.fullscreenCanvasAdjust()
+      window.addEventListener('resize', debounce(() => {
+        this.fullscreenCanvasAdjust()
+      }, 500))
+    }
   }
 
   compileShader = (name: string, src: string, shaderType: ShaderTypes): WebGLShader => {
@@ -45,8 +60,8 @@ export default class Engine {
     gl.shaderSource(compiledShader, src)
     gl.compileShader(compiledShader)
     if (!gl.getShaderParameter(compiledShader, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(compiledShader))
       gl.deleteShader(compiledShader)
+      throw new Error(gl.getShaderInfoLog(compiledShader))
       return null
     }
     shaders[name] = compiledShader
@@ -108,15 +123,16 @@ export default class Engine {
   }
 
   render = () => {
-    this.draw(this.gl)
+    this.draw(this.gl, this)
     window.requestAnimationFrame(this.render)
   }
-
+  
   start = () => {
-    this.init(this.gl)
+    this.init(this.gl, this)
     this.RAF = requestAnimationFrame(this.render)
   }
-
-  draw = (gl: WebGLRenderingContext) => {}
-  init = (gl: WebGLRenderingContext) => {}
+  
+  onResize = (gl: WebGLRenderingContext, e :Engine) => {}
+  draw = (gl: WebGLRenderingContext, e :Engine) => {}
+  init = (gl: WebGLRenderingContext, e :Engine) => {}
 }
