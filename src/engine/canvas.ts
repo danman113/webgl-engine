@@ -15,15 +15,10 @@ const setCanvasDimensions = (element: HTMLCanvasElement, maxWidth: number, maxHe
 
 const setCanvasSize = (element: HTMLCanvasElement, settings: CanvasSettings) => {
   if (!!settings.fullscreen) {
-    const maxWidth = window.innerWidth
-    const maxHeight = window.innerHeight
-    setCanvasDimensions(element, maxWidth, maxHeight)
-    window.addEventListener('resize', debounce(() => {
-      setCanvasSize(element, settings)
-    }, 500))
-  } else {
-    setCanvasDimensions(element, settings.width, settings.height)
+    settings.width = window.innerWidth
+    settings.height = window.innerHeight
   }
+  setCanvasDimensions(element, settings.width, settings.height)
 }
 
 const getWebglContext = (element: HTMLCanvasElement): WebGLRenderingContext => {
@@ -35,9 +30,15 @@ const getWebglContext = (element: HTMLCanvasElement): WebGLRenderingContext => {
   return gl
 }
 
-const setupWebglCanvas = (element: HTMLCanvasElement, settings: CanvasSettings): WebGLRenderingContext => {
+const setupWebglCanvas = (element: HTMLCanvasElement, settings: CanvasSettings, onResize: Function): WebGLRenderingContext => {
   setCanvasSize(element, settings)
-  return getWebglContext(element)
+  const gl = getWebglContext(element)
+  window.addEventListener('resize', debounce(() => {
+    setCanvasSize(element, settings)
+    gl.viewport(0, 0, settings.width, settings.height)
+    onResize(settings)
+  }, 500))
+  return gl
 }
 
 export default setupWebglCanvas

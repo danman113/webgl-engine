@@ -6,15 +6,9 @@ import * as simpleFrag from './shaders/simple.frag'
 
 import * as simpleVert from './shaders/simple.vert'
 
-import * as simpleGLSL from './shaders/toon.glsl'
-
 console.log(simpleFrag)
 
 console.log(simpleVert)
-
-console.log(simpleGLSL)
-
-let squares: any[] = []
 
 window.onload = () => {
   const engine = new Engine(<HTMLCanvasElement>document.getElementById('webgl'), {
@@ -64,7 +58,7 @@ window.onload = () => {
 
   let a = 0.1
 
-  engine.draw = (gl) => {
+  engine.draw = (gl, { settings: { width, height } }) => {
     const { shaderPrograms, buffers } = engine
     const { attribLocations, uniformLocations } = shaderPrograms['simple']
     a += 0.01
@@ -87,7 +81,7 @@ window.onload = () => {
     // and 100 units away from the camera.
 
     const fieldOfView = 90 * Math.PI / 180   // in radians
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
+    const aspect = width / height
     const zNear = 0.1
     const zFar = 100.0
     const projectionMatrix = mat4.create()

@@ -27,14 +27,12 @@ export default class ShaderProgram {
     if (attribLocations[name] >= 0) {
       throw Error (`Attribute Location has already been set for attribute ${name}`)
     } else {
-      console.log(`Set attribute for ${name}`)
       attribLocations[name] = gl.getAttribLocation(shaderProgram, name)
     }
   }
 
   getAttribLocation  = (name: string) => {
     const { attribLocations } = this
-    console.log()
     if (attribLocations[name] >= 0) {
       return attribLocations[name]
     } else {

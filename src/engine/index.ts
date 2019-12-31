@@ -35,8 +35,8 @@ export default class Engine {
   public canvasSettings: CanvasSettings
 
   private RAF: number
-  constructor (element: HTMLCanvasElement, settings: EngineSettings) {
-    this.gl = setupWebglCanvas(element, settings)
+  constructor (public element: HTMLCanvasElement, public settings: EngineSettings) {
+    this.gl = setupWebglCanvas(element, settings, this.onResize)
   }
 
   compileShader = (name: string, src: string, shaderType: ShaderTypes): WebGLShader => {
@@ -45,9 +45,9 @@ export default class Engine {
     gl.shaderSource(compiledShader, src)
     gl.compileShader(compiledShader)
     if (!gl.getShaderParameter(compiledShader, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(compiledShader))
-      gl.deleteShader(compiledShader)
-      return null
+      const error = new Error(gl.getShaderInfoLog(compiledShader))
+			gl.deleteShader(compiledShader)
+			throw error
     }
     shaders[name] = compiledShader
     return shaders[name]
@@ -62,7 +62,6 @@ export default class Engine {
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
       throw new Error(gl.getProgramInfoLog(shaderProgram))
-      return null
     }
 
     shaderPrograms[name] = new ShaderProgram(shaderProgram, gl)
@@ -108,15 +107,16 @@ export default class Engine {
   }
 
   render = () => {
-    this.draw(this.gl)
+    this.draw(this.gl, this)
     window.requestAnimationFrame(this.render)
   }
 
   start = () => {
-    this.init(this.gl)
+    this.init(this.gl, this)
     this.RAF = requestAnimationFrame(this.render)
   }
 
-  draw = (gl: WebGLRenderingContext) => {}
-  init = (gl: WebGLRenderingContext) => {}
+  draw = (gl: WebGLRenderingContext, e: Engine) => {}
+  init = (gl: WebGLRenderingContext, e: Engine) => {}
+  onResize = () => {}
 }
