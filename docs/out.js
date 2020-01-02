@@ -17416,13 +17416,28 @@ var ShaderTypes;
 var Material = /** @class */ (function () {
     function Material(gl, vertexSource, fragmentSource, attributeNames, uniformNames) {
         var _this = this;
+        if (uniformNames === void 0) { uniformNames = []; }
         this.gl = gl;
         this.vertexSource = vertexSource;
         this.fragmentSource = fragmentSource;
-        this.attributeNames = attributeNames;
-        this.uniformNames = uniformNames;
         this.uniformsMap = {};
         this.attributesMap = {};
+        this.getAttribLocation = function (name) {
+            var attributesMap = _this.attributesMap;
+            if (attributesMap[name] >= 0) {
+                return attributesMap[name];
+            }
+            else {
+                throw Error("Attribute Location " + name + " has not been initialized");
+            }
+        };
+        this.bindAttribute = function (attrName, attr) {
+            var attrLocation = _this.getAttribLocation(attrName);
+            console.log("Binding attribute " + attrName);
+            _this.gl.enableVertexAttribArray(attrLocation);
+            _this.gl.bindBuffer(_this.gl.ARRAY_BUFFER, attr.buffer);
+            _this.gl.vertexAttribPointer(attrLocation, attr.vertexAttributeMetadata.dimension, attr.vertexAttributeMetadata.type, attr.vertexAttributeMetadata.normalize, attr.vertexAttributeMetadata.stride, attr.vertexAttributeMetadata.offset);
+        };
         this.compileShader = function (src, shaderType) {
             var gl = _this.gl;
             var compiledShader = gl.createShader(shaderType === ShaderTypes.Fragment ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER);
@@ -17525,18 +17540,39 @@ var ShaderProgram = /** @class */ (function () {
                 throw Error("Uniform Location " + name + " has not been initialized");
             }
         };
-        this.bindAttribute = function (attrName, attr) {
-            var attrLocation = _this.getAttribLocation(attrName);
-            _this.gl.enableVertexAttribArray(attrLocation);
-            _this.gl.bindBuffer(_this.gl.ARRAY_BUFFER, attr.buffer);
-            _this.gl.vertexAttribPointer(attrLocation, attr.vertexAttributeMetadata.dimension, attr.vertexAttributeMetadata.type, attr.vertexAttributeMetadata.normalize, attr.vertexAttributeMetadata.stride, attr.vertexAttributeMetadata.offset);
-        };
         this.shaderProgram = shaderProgram;
         this.gl = gl;
     }
     return ShaderProgram;
 }());
 exports.default = ShaderProgram;
+
+
+/***/ }),
+
+/***/ "./src/engine/vertexAttribute.ts":
+/*!***************************************!*\
+  !*** ./src/engine/vertexAttribute.ts ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var VertexAttribute = /** @class */ (function () {
+    function VertexAttribute(gl, data, _a, usage) {
+        var dimension = _a.dimension, _b = _a.type, type = _b === void 0 ? gl.FLOAT : _b, _c = _a.normalize, normalize = _c === void 0 ? false : _c, _d = _a.stride, stride = _d === void 0 ? 0 : _d, _e = _a.offset, offset = _e === void 0 ? 0 : _e;
+        if (usage === void 0) { usage = gl.STATIC_DRAW; }
+        var buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+        this.buffer = buffer;
+        this.vertexAttributeMetadata = { dimension: dimension, type: type, normalize: normalize, stride: stride, offset: offset };
+    }
+    return VertexAttribute;
+}());
+exports.default = VertexAttribute;
 
 
 /***/ }),
@@ -17551,188 +17587,40 @@ exports.default = ShaderProgram;
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 Object.defineProperty(exports, "__esModule", { value: true });
+// import { ShaderTypes } from './engine/shader'
+// import { mat4 } from 'gl-matrix'
 var engine_1 = __webpack_require__(/*! ./engine */ "./src/engine/index.ts");
-var simpleFrag = __webpack_require__(/*! ./shaders/simple.frag */ "./src/shaders/simple.frag");
-var simpleVert = __webpack_require__(/*! ./shaders/simple.vert */ "./src/shaders/simple.vert");
+// import * as simpleFrag from './shaders/simple.frag'
+// import * as simpleVert from './shaders/simple.vert'
 var material_1 = __webpack_require__(/*! ./engine/material */ "./src/engine/material.ts");
-console.log(simpleFrag);
-console.log(simpleVert);
+var vertexAttribute_1 = __webpack_require__(/*! ./engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
+var entities = [];
 window.onload = function () {
     var engine = new engine_1.default(document.getElementById('webgl'), {
         fullscreen: true
     });
     engine.init = function (gl) {
         global.engine = engine;
-        var simpleMaterial = new material_1.default(gl, simpleVert, simpleFrag, ['aVertexPosition', 'aVertexColor'], ['uProjectionMatrix', 'uModelViewMatrix']);
+        var simpleMaterial = new material_1.default(gl, "\n      precision mediump float;\n      attribute vec3 aPosition;\n      varying float aColor;\n      void main () {\n        aColor = aPosition.z;\n        gl_Position = vec4(aPosition.x, aPosition.y, 0, 1);\n      }", "\n      precision mediump float;\n      varying float aColor;\n      void main () {\n        gl_FragColor = vec4(vec3(0.55, 0.42, 0.90) * aColor, 1);\n      }\n      ", ['aPosition']);
+        var aPosition = new vertexAttribute_1.default(gl, new Float32Array([0, 0.5, 0.5, 0.5, -0.5, 0, -0.5, -0.5, 1]), {
+            dimension: 3
+        });
+        entities.push({ mat: simpleMaterial, attr: aPosition });
     };
-    // engine.init = (gl) => {
-    //   global.engine = engine
-    //   const vert = engine.compileShader('simpleVert', simpleVert, ShaderTypes.Vertex)
-    //   const frag = engine.compileShader('simpleFrag', simpleFrag, ShaderTypes.Fragment)
-    //   engine.initShaderProgram('simple', vert, frag)
-    //   engine.shaderPrograms['simple'].initAttribLocation('aVertexPosition')
-    //   engine.shaderPrograms['simple'].initAttribLocation('aVertexColor')
-    //   engine.shaderPrograms['simple'].initUniformLocation('uProjectionMatrix')
-    //   engine.shaderPrograms['simple'].initUniformLocation('uModelViewMatrix')
-    //   engine.createBuffer('position', [
-    //     1, 1,
-    //     -1, 1,
-    //     1, -1,
-    //     -1, -1
-    //   ])
-    //   engine.createBuffer('secondSquare', [
-    //     1, 1,
-    //     -1, 1,
-    //     1, -1,
-    //     -1, -1
-    //   ].map(elem => elem + 5))
-    //   for (let i = 0; i < 20; i ++) {
-    //     const offset = (Math.random() - 0.5) * 40
-    //     engine.createBuffer(`square_${i}`, [
-    //       1, 1,
-    //       -1, 1,
-    //       1, -1,
-    //       -1, -1
-    //     ].map(elem => elem + offset + (Math.random() / 4)))
-    //   }
-    //   engine.createBuffer('colors', [
-    //     1, 0, 0, 1,
-    //     0, 1, 0, 1,
-    //     0, 0, 1, 1,
-    //     1, 0, 1, 0.5
-    //   ])
-    //   gl.clear(engine.gl.COLOR_BUFFER_BIT)
-    // }
-    var a = 0.1;
-    // engine.draw = (gl, { settings: { width, height } }) => {
-    //   const { shaderPrograms, buffers } = engine
-    //   const { attribLocations, uniformLocations } = shaderPrograms['simple']
-    //   a += 0.01
-    //   // Clear to black
-    //   gl.clearColor(0, 0, 0, 1)
-    //   gl.clearDepth(1)
-    //   gl.enable(gl.DEPTH_TEST)
-    //   // Near things obscure far things
-    //   gl.depthFunc(gl.LEQUAL)
-    //   // Clear the canvas before we start drawing on it.
-    //   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    //   // Create a perspective matrix, a special matrix that is
-    //   // used to simulate the distortion of perspective in a camera.
-    //   // Our field of view is 45 degrees, with a width/height
-    //   // ratio that matches the display size of the canvas
-    //   // and we only want to see objects between 0.1 units
-    //   // and 100 units away from the camera.
-    //   const fieldOfView = 90 * Math.PI / 180   // in radians
-    //   const aspect = width / height
-    //   const zNear = 0.1
-    //   const zFar = 100.0
-    //   const projectionMatrix = mat4.create()
-    //   // note: glmatrix.js always has the first argument
-    //   // as the destination to receive the result.
-    //   mat4.perspective(
-    //     projectionMatrix,
-    //     fieldOfView,
-    //     aspect,
-    //     zNear,
-    //     zFar
-    //   )
-    //   // Set the drawing position to the "identity" point, which is
-    //   // the center of the scene.
-    //   const modelViewMatrix = mat4.create()
-    //   // Now move the drawing position a bit to where we want to
-    //   // start drawing the square.
-    //   mat4.translate(
-    //     modelViewMatrix, // destination matrix
-    //     modelViewMatrix, // matrix to translate
-    //     [-0.0, 0.0, -6.0 - a] // amount to translate
-    //   )
-    //   // Tell WebGL how to pull out the positions from the position
-    //   // buffer into the vertexPosition attribute.
-    //   engine.loadBuffer(buffers['position'])
-    //   engine.bindVertexAttrib({
-    //     dimension: 2,
-    //     type: engine.gl.FLOAT,
-    //     normalize: false,
-    //     stride: 0,
-    //     offset: 0,
-    //     attributeName: 'aVertexPosition'
-    //   }, shaderPrograms.simple)
-    //   engine.loadBuffer(buffers['colors'])
-    //   engine.bindVertexAttrib({
-    //     dimension: 4,
-    //     type: engine.gl.FLOAT,
-    //     normalize: false,
-    //     stride: 0,
-    //     offset: 0,
-    //     attributeName: 'aVertexColor'
-    //   }, shaderPrograms.simple)
-    //   // Tell WebGL to use our program when drawing
-    //   gl.useProgram(shaderPrograms.simple.shaderProgram)
-    //   // Set the shader uniforms
-    //   gl.uniformMatrix4fv(
-    //     uniformLocations.uProjectionMatrix,
-    //     false,
-    //     projectionMatrix
-    //   )
-    //   gl.uniformMatrix4fv(
-    //     uniformLocations.uModelViewMatrix,
-    //     false,
-    //     modelViewMatrix
-    //   )
-    //   {
-    //     const offset = 0
-    //     const vertexCount = 4
-    //     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
-    //     engine.loadBuffer(buffers['secondSquare'])
-    //     engine.bindVertexAttrib({
-    //       dimension: 2,
-    //       type: engine.gl.FLOAT,
-    //       normalize: false,
-    //       stride: 0,
-    //       offset: 0,
-    //       attributeName: 'aVertexPosition'
-    //     }, shaderPrograms.simple)
-    //     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
-    //     for (let i = 0; i < 20; i++) {
-    //       engine.loadBuffer(buffers[`square_${i}`])
-    //       engine.bindVertexAttrib({
-    //         dimension: 2,
-    //         type: engine.gl.FLOAT,
-    //         normalize: false,
-    //         stride: 0,
-    //         offset: 0,
-    //         attributeName: 'aVertexPosition'
-    //       }, shaderPrograms.simple)
-    //       gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
-    //     }
-    //   }
-    // }
+    engine.draw = function (gl) {
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        for (var _i = 0, entities_1 = entities; _i < entities_1.length; _i++) {
+            var entity = entities_1[_i];
+            gl.useProgram(entity.mat.program);
+            entity.mat.bindAttribute('aPosition', entity.attr);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+    };
     engine.start();
 };
 
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
-
-/***/ }),
-
-/***/ "./src/shaders/simple.frag":
-/*!*********************************!*\
-  !*** ./src/shaders/simple.frag ***!
-  \*********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "\nvarying lowp vec4 color;\nvoid main() {\n  gl_FragColor = color;\n}"
-
-/***/ }),
-
-/***/ "./src/shaders/simple.vert":
-/*!*********************************!*\
-  !*** ./src/shaders/simple.vert ***!
-  \*********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "attribute vec4 aVertexPosition;\nattribute vec4 aVertexColor;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying lowp vec4 color;\n\nvoid main () {\n  color = aVertexColor;\n  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n}"
 
 /***/ })
 
