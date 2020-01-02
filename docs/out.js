@@ -96,7 +96,7 @@
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * @license
  * Lodash <https://lodash.com/>
- * Copyright JS Foundation and other contributors <https://js.foundation/>
+ * Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
  * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -107,7 +107,7 @@
   var undefined;
 
   /** Used as the semantic version number. */
-  var VERSION = '4.17.11';
+  var VERSION = '4.17.15';
 
   /** Used as the size to enable large array optimizations. */
   var LARGE_ARRAY_SIZE = 200;
@@ -517,7 +517,7 @@
   var root = freeGlobal || freeSelf || Function('return this')();
 
   /** Detect free variable `exports`. */
-  var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+  var freeExports =  true && exports && !exports.nodeType && exports;
 
   /** Detect free variable `module`. */
   var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
@@ -2766,16 +2766,10 @@
         value.forEach(function(subValue) {
           result.add(baseClone(subValue, bitmask, customizer, subValue, value, stack));
         });
-
-        return result;
-      }
-
-      if (isMap(value)) {
+      } else if (isMap(value)) {
         value.forEach(function(subValue, key) {
           result.set(key, baseClone(subValue, bitmask, customizer, key, value, stack));
         });
-
-        return result;
       }
 
       var keysFunc = isFull
@@ -3699,8 +3693,8 @@
         return;
       }
       baseFor(source, function(srcValue, key) {
+        stack || (stack = new Stack);
         if (isObject(srcValue)) {
-          stack || (stack = new Stack);
           baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack);
         }
         else {
@@ -5517,7 +5511,7 @@
       return function(number, precision) {
         number = toNumber(number);
         precision = precision == null ? 0 : nativeMin(toInteger(precision), 292);
-        if (precision) {
+        if (precision && nativeIsFinite(number)) {
           // Shift with exponential notation to avoid floating-point issues.
           // See [MDN](https://mdn.io/round#Examples) for more details.
           var pair = (toString(number) + 'e').split('e'),
@@ -6700,7 +6694,7 @@
     }
 
     /**
-     * Gets the value at `key`, unless `key` is "__proto__".
+     * Gets the value at `key`, unless `key` is "__proto__" or "constructor".
      *
      * @private
      * @param {Object} object The object to query.
@@ -6708,6 +6702,10 @@
      * @returns {*} Returns the property value.
      */
     function safeGet(object, key) {
+      if (key === 'constructor' && typeof object[key] === 'function') {
+        return;
+      }
+
       if (key == '__proto__') {
         return;
       }
@@ -10508,6 +10506,7 @@
           }
           if (maxing) {
             // Handle invocations in a tight loop.
+            clearTimeout(timerId);
             timerId = setTimeout(timerExpired, wait);
             return invokeFunc(lastCallTime);
           }
@@ -14894,9 +14893,12 @@
       , 'g');
 
       // Use a sourceURL for easier debugging.
+      // The sourceURL gets injected into the source that's eval-ed, so be careful
+      // with lookup (in case of e.g. prototype pollution), and strip newlines if any.
+      // A newline wouldn't be a valid sourceURL anyway, and it'd enable code injection.
       var sourceURL = '//# sourceURL=' +
-        ('sourceURL' in options
-          ? options.sourceURL
+        (hasOwnProperty.call(options, 'sourceURL')
+          ? (options.sourceURL + '').replace(/[\r\n]/g, ' ')
           : ('lodash.templateSources[' + (++templateCounter) + ']')
         ) + '\n';
 
@@ -14929,7 +14931,9 @@
 
       // If `variable` is not specified wrap a with-statement around the generated
       // code to add the data object to the top of the scope chain.
-      var variable = options.variable;
+      // Like with sourceURL, we take care to not check the option's prototype,
+      // as this configuration is a code injection vector.
+      var variable = hasOwnProperty.call(options, 'variable') && options.variable;
       if (!variable) {
         source = 'with (obj) {\n' + source + '\n}\n';
       }
@@ -17134,10 +17138,11 @@
     baseForOwn(LazyWrapper.prototype, function(func, methodName) {
       var lodashFunc = lodash[methodName];
       if (lodashFunc) {
-        var key = (lodashFunc.name + ''),
-            names = realNames[key] || (realNames[key] = []);
-
-        names.push({ 'name': methodName, 'func': lodashFunc });
+        var key = lodashFunc.name + '';
+        if (!hasOwnProperty.call(realNames, key)) {
+          realNames[key] = [];
+        }
+        realNames[key].push({ 'name': methodName, 'func': lodashFunc });
       }
     });
 
@@ -17213,7 +17218,7 @@ g = (function() {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1, eval)("this");
+	g = g || new Function("return this")();
 } catch (e) {
 	// This works if the window reference is available
 	if (typeof window === "object") g = window;
@@ -17261,6 +17266,281 @@ module.exports = function(module) {
 
 /***/ }),
 
+/***/ "./src/engine/canvas.ts":
+/*!******************************!*\
+  !*** ./src/engine/canvas.ts ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var lodash_1 = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js");
+var setCanvasDimensions = function (element, maxWidth, maxHeight) {
+    element.width = maxWidth;
+    element.height = maxHeight;
+    element.style.width = "" + maxWidth;
+    element.style.height = "" + maxHeight;
+};
+var setCanvasSize = function (element, settings) {
+    if (!!settings.fullscreen) {
+        settings.width = window.innerWidth;
+        settings.height = window.innerHeight;
+    }
+    setCanvasDimensions(element, settings.width, settings.height);
+};
+var getWebglContext = function (element) {
+    var gl = element.getContext('webgl');
+    if (!gl) {
+        throw new Error('Could not get webgl context');
+        return null;
+    }
+    return gl;
+};
+var setupWebglCanvas = function (element, settings, onResize) {
+    setCanvasSize(element, settings);
+    var gl = getWebglContext(element);
+    window.addEventListener('resize', lodash_1.debounce(function () {
+        setCanvasSize(element, settings);
+        // Sets internal webgl viewport to be the size of the canvas
+        gl.viewport(0, 0, settings.width, settings.height);
+        onResize(settings);
+    }, 500));
+    return gl;
+};
+exports.default = setupWebglCanvas;
+
+
+/***/ }),
+
+/***/ "./src/engine/index.ts":
+/*!*****************************!*\
+  !*** ./src/engine/index.ts ***!
+  \*****************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var canvas_1 = __webpack_require__(/*! ./canvas */ "./src/engine/canvas.ts");
+var shader_1 = __webpack_require__(/*! ./shader */ "./src/engine/shader.ts");
+var Engine = /** @class */ (function () {
+    function Engine(element, settings) {
+        var _this = this;
+        this.element = element;
+        this.settings = settings;
+        this.shaders = {};
+        this.shaderPrograms = {};
+        this.buffers = {};
+        this.compileShader = function (name, src, shaderType) {
+            var _a = _this, gl = _a.gl, shaders = _a.shaders;
+            var compiledShader = gl.createShader(shaderType === shader_1.ShaderTypes.Fragment ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER);
+            gl.shaderSource(compiledShader, src);
+            gl.compileShader(compiledShader);
+            if (!gl.getShaderParameter(compiledShader, gl.COMPILE_STATUS)) {
+                var error = new Error(gl.getShaderInfoLog(compiledShader));
+                gl.deleteShader(compiledShader);
+                throw error;
+            }
+            shaders[name] = compiledShader;
+            return shaders[name];
+        };
+        this.initShaderProgram = function (name, vertexShader, fragmentShader) {
+            var _a = _this, gl = _a.gl, shaderPrograms = _a.shaderPrograms;
+            var shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                throw new Error(gl.getProgramInfoLog(shaderProgram));
+            }
+            shaderPrograms[name] = new shader_1.default(shaderProgram, gl);
+            return shaderPrograms[name];
+        };
+        this.loadBuffer = function (buffer) {
+            _this.gl.bindBuffer(_this.gl.ARRAY_BUFFER, buffer);
+        };
+        this.bindVertexAttrib = function (attr, shader) {
+            var gl = _this.gl;
+            var dimension = attr.dimension, type = attr.type, normalize = attr.normalize, stride = attr.stride, offset = attr.offset, attributeName = attr.attributeName;
+            var attribLocation = shader.getAttribLocation(attributeName);
+            // Tells opengl how to populate the shader attribute, then enables it
+            gl.vertexAttribPointer(attribLocation, dimension, type, normalize, stride, offset);
+            gl.enableVertexAttribArray(attribLocation);
+        };
+        this.createBuffer = function (name, data) {
+            var _a = _this, gl = _a.gl, buffers = _a.buffers;
+            var buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+            buffers[name] = buffer;
+            return buffers[name];
+        };
+        this.render = function () {
+            _this.draw(_this.gl, _this);
+            window.requestAnimationFrame(_this.render);
+        };
+        this.start = function () {
+            _this.init(_this.gl, _this);
+            _this.RAF = requestAnimationFrame(_this.render);
+        };
+        this.draw = function (gl, e) { };
+        this.init = function (gl, e) { };
+        this.onResize = function () { };
+        this.gl = canvas_1.default(element, settings, this.onResize);
+    }
+    return Engine;
+}());
+exports.default = Engine;
+
+
+/***/ }),
+
+/***/ "./src/engine/material.ts":
+/*!********************************!*\
+  !*** ./src/engine/material.ts ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ShaderTypes;
+(function (ShaderTypes) {
+    ShaderTypes["Fragment"] = "FRAGMENT";
+    ShaderTypes["Vertex"] = "VERTEX";
+})(ShaderTypes = exports.ShaderTypes || (exports.ShaderTypes = {}));
+var Material = /** @class */ (function () {
+    function Material(gl, vertexSource, fragmentSource, attributeNames, uniformNames) {
+        var _this = this;
+        this.gl = gl;
+        this.vertexSource = vertexSource;
+        this.fragmentSource = fragmentSource;
+        this.attributeNames = attributeNames;
+        this.uniformNames = uniformNames;
+        this.uniformsMap = {};
+        this.attributesMap = {};
+        this.compileShader = function (src, shaderType) {
+            var gl = _this.gl;
+            var compiledShader = gl.createShader(shaderType === ShaderTypes.Fragment ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER);
+            gl.shaderSource(compiledShader, src);
+            gl.compileShader(compiledShader);
+            if (!gl.getShaderParameter(compiledShader, gl.COMPILE_STATUS)) {
+                var error = new Error(gl.getShaderInfoLog(compiledShader));
+                gl.deleteShader(compiledShader);
+                throw error;
+            }
+            return compiledShader;
+        };
+        this.initShaderProgram = function (vertexShader, fragmentShader) {
+            var gl = _this.gl;
+            var shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                var error = new Error(gl.getProgramInfoLog(shaderProgram));
+                gl.deleteProgram(shaderProgram);
+                throw error;
+            }
+            return shaderProgram;
+        };
+        this.vertexShader = this.compileShader(vertexSource, ShaderTypes.Vertex);
+        this.fragmentShader = this.compileShader(fragmentSource, ShaderTypes.Fragment);
+        this.program = this.initShaderProgram(this.vertexShader, this.fragmentShader);
+        for (var _i = 0, attributeNames_1 = attributeNames; _i < attributeNames_1.length; _i++) {
+            var attr = attributeNames_1[_i];
+            var location_1 = this.gl.getAttribLocation(this.program, attr);
+            this.attributesMap[attr] = location_1;
+        }
+        for (var _a = 0, uniformNames_1 = uniformNames; _a < uniformNames_1.length; _a++) {
+            var uniform = uniformNames_1[_a];
+            var location_2 = this.gl.getAttribLocation(this.program, uniform);
+            this.uniformsMap[uniform] = location_2;
+        }
+    }
+    return Material;
+}());
+exports.default = Material;
+
+
+/***/ }),
+
+/***/ "./src/engine/shader.ts":
+/*!******************************!*\
+  !*** ./src/engine/shader.ts ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ShaderTypes;
+(function (ShaderTypes) {
+    ShaderTypes["Fragment"] = "FRAGMENT";
+    ShaderTypes["Vertex"] = "VERTEX";
+})(ShaderTypes = exports.ShaderTypes || (exports.ShaderTypes = {}));
+var ShaderProgram = /** @class */ (function () {
+    function ShaderProgram(shaderProgram, gl) {
+        var _this = this;
+        this.attribLocations = {};
+        this.uniformLocations = {};
+        this.initAttribLocation = function (name) {
+            var _a = _this, attribLocations = _a.attribLocations, gl = _a.gl, shaderProgram = _a.shaderProgram;
+            if (attribLocations[name] >= 0) {
+                throw Error("Attribute Location has already been set for attribute " + name);
+            }
+            else {
+                attribLocations[name] = gl.getAttribLocation(shaderProgram, name);
+            }
+        };
+        this.getAttribLocation = function (name) {
+            var attribLocations = _this.attribLocations;
+            if (attribLocations[name] >= 0) {
+                return attribLocations[name];
+            }
+            else {
+                throw Error("Attribute Location " + name + " has not been initialized");
+            }
+        };
+        this.initUniformLocation = function (name) {
+            var _a = _this, uniformLocations = _a.uniformLocations, gl = _a.gl, shaderProgram = _a.shaderProgram;
+            if (uniformLocations[name] >= 0) {
+                throw Error("Uniform Location has already been set for Uniform " + name);
+            }
+            else {
+                uniformLocations[name] = gl.getUniformLocation(shaderProgram, name);
+            }
+        };
+        this.getUniformLocation = function (name) {
+            var _a = _this, uniformLocations = _a.uniformLocations, gl = _a.gl;
+            if (uniformLocations[name] >= 0) {
+                return uniformLocations[name];
+            }
+            else {
+                throw Error("Uniform Location " + name + " has not been initialized");
+            }
+        };
+        this.bindAttribute = function (attrName, attr) {
+            var attrLocation = _this.getAttribLocation(attrName);
+            _this.gl.enableVertexAttribArray(attrLocation);
+            _this.gl.bindBuffer(_this.gl.ARRAY_BUFFER, attr.buffer);
+            _this.gl.vertexAttribPointer(attrLocation, attr.vertexAttributeMetadata.dimension, attr.vertexAttributeMetadata.type, attr.vertexAttributeMetadata.normalize, attr.vertexAttributeMetadata.stride, attr.vertexAttributeMetadata.offset);
+        };
+        this.shaderProgram = shaderProgram;
+        this.gl = gl;
+    }
+    return ShaderProgram;
+}());
+exports.default = ShaderProgram;
+
+
+/***/ }),
+
 /***/ "./src/index.ts":
 /*!**********************!*\
   !*** ./src/index.ts ***!
@@ -17269,13 +17549,192 @@ module.exports = function(module) {
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/* WEBPACK VAR INJECTION */(function(global) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var engine_1 = __webpack_require__(/*! ./engine */ "./src/engine/index.ts");
+var simpleFrag = __webpack_require__(/*! ./shaders/simple.frag */ "./src/shaders/simple.frag");
+var simpleVert = __webpack_require__(/*! ./shaders/simple.vert */ "./src/shaders/simple.vert");
+var material_1 = __webpack_require__(/*! ./engine/material */ "./src/engine/material.ts");
+console.log(simpleFrag);
+console.log(simpleVert);
+window.onload = function () {
+    var engine = new engine_1.default(document.getElementById('webgl'), {
+        fullscreen: true
+    });
+    engine.init = function (gl) {
+        global.engine = engine;
+        var simpleMaterial = new material_1.default(gl, simpleVert, simpleFrag, ['aVertexPosition', 'aVertexColor'], ['uProjectionMatrix', 'uModelViewMatrix']);
+    };
+    // engine.init = (gl) => {
+    //   global.engine = engine
+    //   const vert = engine.compileShader('simpleVert', simpleVert, ShaderTypes.Vertex)
+    //   const frag = engine.compileShader('simpleFrag', simpleFrag, ShaderTypes.Fragment)
+    //   engine.initShaderProgram('simple', vert, frag)
+    //   engine.shaderPrograms['simple'].initAttribLocation('aVertexPosition')
+    //   engine.shaderPrograms['simple'].initAttribLocation('aVertexColor')
+    //   engine.shaderPrograms['simple'].initUniformLocation('uProjectionMatrix')
+    //   engine.shaderPrograms['simple'].initUniformLocation('uModelViewMatrix')
+    //   engine.createBuffer('position', [
+    //     1, 1,
+    //     -1, 1,
+    //     1, -1,
+    //     -1, -1
+    //   ])
+    //   engine.createBuffer('secondSquare', [
+    //     1, 1,
+    //     -1, 1,
+    //     1, -1,
+    //     -1, -1
+    //   ].map(elem => elem + 5))
+    //   for (let i = 0; i < 20; i ++) {
+    //     const offset = (Math.random() - 0.5) * 40
+    //     engine.createBuffer(`square_${i}`, [
+    //       1, 1,
+    //       -1, 1,
+    //       1, -1,
+    //       -1, -1
+    //     ].map(elem => elem + offset + (Math.random() / 4)))
+    //   }
+    //   engine.createBuffer('colors', [
+    //     1, 0, 0, 1,
+    //     0, 1, 0, 1,
+    //     0, 0, 1, 1,
+    //     1, 0, 1, 0.5
+    //   ])
+    //   gl.clear(engine.gl.COLOR_BUFFER_BIT)
+    // }
+    var a = 0.1;
+    // engine.draw = (gl, { settings: { width, height } }) => {
+    //   const { shaderPrograms, buffers } = engine
+    //   const { attribLocations, uniformLocations } = shaderPrograms['simple']
+    //   a += 0.01
+    //   // Clear to black
+    //   gl.clearColor(0, 0, 0, 1)
+    //   gl.clearDepth(1)
+    //   gl.enable(gl.DEPTH_TEST)
+    //   // Near things obscure far things
+    //   gl.depthFunc(gl.LEQUAL)
+    //   // Clear the canvas before we start drawing on it.
+    //   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    //   // Create a perspective matrix, a special matrix that is
+    //   // used to simulate the distortion of perspective in a camera.
+    //   // Our field of view is 45 degrees, with a width/height
+    //   // ratio that matches the display size of the canvas
+    //   // and we only want to see objects between 0.1 units
+    //   // and 100 units away from the camera.
+    //   const fieldOfView = 90 * Math.PI / 180   // in radians
+    //   const aspect = width / height
+    //   const zNear = 0.1
+    //   const zFar = 100.0
+    //   const projectionMatrix = mat4.create()
+    //   // note: glmatrix.js always has the first argument
+    //   // as the destination to receive the result.
+    //   mat4.perspective(
+    //     projectionMatrix,
+    //     fieldOfView,
+    //     aspect,
+    //     zNear,
+    //     zFar
+    //   )
+    //   // Set the drawing position to the "identity" point, which is
+    //   // the center of the scene.
+    //   const modelViewMatrix = mat4.create()
+    //   // Now move the drawing position a bit to where we want to
+    //   // start drawing the square.
+    //   mat4.translate(
+    //     modelViewMatrix, // destination matrix
+    //     modelViewMatrix, // matrix to translate
+    //     [-0.0, 0.0, -6.0 - a] // amount to translate
+    //   )
+    //   // Tell WebGL how to pull out the positions from the position
+    //   // buffer into the vertexPosition attribute.
+    //   engine.loadBuffer(buffers['position'])
+    //   engine.bindVertexAttrib({
+    //     dimension: 2,
+    //     type: engine.gl.FLOAT,
+    //     normalize: false,
+    //     stride: 0,
+    //     offset: 0,
+    //     attributeName: 'aVertexPosition'
+    //   }, shaderPrograms.simple)
+    //   engine.loadBuffer(buffers['colors'])
+    //   engine.bindVertexAttrib({
+    //     dimension: 4,
+    //     type: engine.gl.FLOAT,
+    //     normalize: false,
+    //     stride: 0,
+    //     offset: 0,
+    //     attributeName: 'aVertexColor'
+    //   }, shaderPrograms.simple)
+    //   // Tell WebGL to use our program when drawing
+    //   gl.useProgram(shaderPrograms.simple.shaderProgram)
+    //   // Set the shader uniforms
+    //   gl.uniformMatrix4fv(
+    //     uniformLocations.uProjectionMatrix,
+    //     false,
+    //     projectionMatrix
+    //   )
+    //   gl.uniformMatrix4fv(
+    //     uniformLocations.uModelViewMatrix,
+    //     false,
+    //     modelViewMatrix
+    //   )
+    //   {
+    //     const offset = 0
+    //     const vertexCount = 4
+    //     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
+    //     engine.loadBuffer(buffers['secondSquare'])
+    //     engine.bindVertexAttrib({
+    //       dimension: 2,
+    //       type: engine.gl.FLOAT,
+    //       normalize: false,
+    //       stride: 0,
+    //       offset: 0,
+    //       attributeName: 'aVertexPosition'
+    //     }, shaderPrograms.simple)
+    //     gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
+    //     for (let i = 0; i < 20; i++) {
+    //       engine.loadBuffer(buffers[`square_${i}`])
+    //       engine.bindVertexAttrib({
+    //         dimension: 2,
+    //         type: engine.gl.FLOAT,
+    //         normalize: false,
+    //         stride: 0,
+    //         offset: 0,
+    //         attributeName: 'aVertexPosition'
+    //       }, shaderPrograms.simple)
+    //       gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
+    //     }
+    //   }
+    // }
+    engine.start();
+};
 
-exports.__esModule = true;
-var _ = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js");
-console.log(_.upperFirst('hello world'));
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
+/***/ }),
+
+/***/ "./src/shaders/simple.frag":
+/*!*********************************!*\
+  !*** ./src/shaders/simple.frag ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "\nvarying lowp vec4 color;\nvoid main() {\n  gl_FragColor = color;\n}"
+
+/***/ }),
+
+/***/ "./src/shaders/simple.vert":
+/*!*********************************!*\
+  !*** ./src/shaders/simple.vert ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "attribute vec4 aVertexPosition;\nattribute vec4 aVertexColor;\n\nuniform mat4 uModelViewMatrix;\nuniform mat4 uProjectionMatrix;\n\nvarying lowp vec4 color;\n\nvoid main () {\n  color = aVertexColor;\n  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;\n}"
 
 /***/ })
 
 /******/ });
-//# sourceMappingURL=bundle.js.map
+//# sourceMappingURL=out.js.map

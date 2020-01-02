@@ -1,11 +1,13 @@
 let path = require('path')
 let HtmlWebpackPlugin = require('html-webpack-plugin')
 
+const outputDir = process.env.outDir || 'docs'
+
 module.exports = {
   entry: './src/index.ts',
   output: {
     filename: 'out.js',
-    path: __dirname + '/dist'
+    path: path.join(__dirname, outputDir)
   },
 
 
@@ -38,7 +40,7 @@ module.exports = {
     })
   ],
   devServer: {
-    contentBase: path.join(__dirname, 'dist'),
+    contentBase: path.join(__dirname, outputDir),
     compress: true,
     hot: true,
     port: 9001

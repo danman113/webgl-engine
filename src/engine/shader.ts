@@ -7,7 +7,6 @@ interface UnifromLocationMap {
   [name: string]: WebGLUniformLocation
 }
 
-
 interface AttributeLocationMap {
   [name: string]: number
 }
@@ -17,7 +16,7 @@ export default class ShaderProgram {
   public gl: WebGLRenderingContext
   public attribLocations: AttributeLocationMap = {}
   public uniformLocations: UnifromLocationMap = {}
-  constructor (shaderProgram: WebGLProgram, gl: WebGLRenderingContext) {
+  constructor(shaderProgram: WebGLProgram, gl: WebGLRenderingContext) {
     this.shaderProgram = shaderProgram
     this.gl = gl
   }
@@ -25,36 +24,36 @@ export default class ShaderProgram {
   initAttribLocation = (name: string) => {
     const { attribLocations, gl, shaderProgram } = this
     if (attribLocations[name] >= 0) {
-      throw Error (`Attribute Location has already been set for attribute ${name}`)
+      throw Error(`Attribute Location has already been set for attribute ${name}`)
     } else {
       attribLocations[name] = gl.getAttribLocation(shaderProgram, name)
     }
   }
 
-  getAttribLocation  = (name: string) => {
+  getAttribLocation = (name: string) => {
     const { attribLocations } = this
     if (attribLocations[name] >= 0) {
       return attribLocations[name]
     } else {
-      throw Error (`Attribute Location ${name} has not been initialized`)
+      throw Error(`Attribute Location ${name} has not been initialized`)
     }
   }
 
   initUniformLocation = (name: string) => {
     const { uniformLocations, gl, shaderProgram } = this
     if (uniformLocations[name] >= 0) {
-      throw Error (`Uniform Location has already been set for Uniform ${name}`)
+      throw Error(`Uniform Location has already been set for Uniform ${name}`)
     } else {
       uniformLocations[name] = gl.getUniformLocation(shaderProgram, name)
     }
   }
 
-  getUniformLocation  = (name: string) => {
+  getUniformLocation = (name: string) => {
     const { uniformLocations, gl } = this
     if (uniformLocations[name] >= 0) {
       return uniformLocations[name]
     } else {
-      throw Error (`Uniform Location ${name} has not been initialized`)
+      throw Error(`Uniform Location ${name} has not been initialized`)
     }
   }
 }

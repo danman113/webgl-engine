@@ -1,9 +1,7 @@
 import setupWebglCanvas, { CanvasSettings } from './canvas'
 import ShaderProgram, { ShaderTypes } from './shader'
 
-interface EngineSettings extends CanvasSettings {
-
-}
+interface EngineSettings extends CanvasSettings {}
 
 interface ShaderMap {
   [name: string]: WebGLShader
@@ -18,11 +16,11 @@ interface BufferMap {
 }
 
 interface VertexAttribute {
-  dimension: number, // How many of the buffer to consume at a time, maps to float, vec2, vec3, vec4...
-  type: number, // The dataType of the float
-  normalize: boolean, // Normalize the vertices
-  stride: number, // how many bytes to get from one set of values to the next. Get by multipying size(type) * (matSize - dimension)
-  offset: number, // how many bytes inside the buffer to start from. Get by multipying size(type) * offsetElements
+  dimension: number // How many of the buffer to consume at a time, maps to float, vec2, vec3, vec4...
+  type: number // The dataType of the float
+  normalize: boolean // Normalize the vertices
+  stride: number // how many bytes to get from one set of values to the next. Get by multipying size(type) * (matSize - dimension)
+  offset: number // how many bytes inside the buffer to start from. Get by multipying size(type) * offsetElements
   attributeName: string // Name of attribute to to bind the vertexes too
 }
 
@@ -35,25 +33,31 @@ export default class Engine {
   public canvasSettings: CanvasSettings
 
   private RAF: number
-  constructor (public element: HTMLCanvasElement, public settings: EngineSettings) {
+  constructor(public element: HTMLCanvasElement, public settings: EngineSettings) {
     this.gl = setupWebglCanvas(element, settings, this.onResize)
   }
 
   compileShader = (name: string, src: string, shaderType: ShaderTypes): WebGLShader => {
     const { gl, shaders } = this
-    const compiledShader: WebGLShader = gl.createShader(shaderType === ShaderTypes.Fragment ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER)
+    const compiledShader: WebGLShader = gl.createShader(
+      shaderType === ShaderTypes.Fragment ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER
+    )
     gl.shaderSource(compiledShader, src)
     gl.compileShader(compiledShader)
     if (!gl.getShaderParameter(compiledShader, gl.COMPILE_STATUS)) {
       const error = new Error(gl.getShaderInfoLog(compiledShader))
-			gl.deleteShader(compiledShader)
-			throw error
+      gl.deleteShader(compiledShader)
+      throw error
     }
     shaders[name] = compiledShader
     return shaders[name]
   }
 
-  initShaderProgram = (name: string, vertexShader: WebGLProgram, fragmentShader: WebGLProgram): ShaderProgram => {
+  initShaderProgram = (
+    name: string,
+    vertexShader: WebGLProgram,
+    fragmentShader: WebGLProgram
+  ): ShaderProgram => {
     const { gl, shaderPrograms } = this
     const shaderProgram: WebGLProgram = gl.createProgram()
     gl.attachShader(shaderProgram, vertexShader)
@@ -74,27 +78,11 @@ export default class Engine {
 
   bindVertexAttrib = (attr: VertexAttribute, shader: ShaderProgram) => {
     const { gl } = this
-    const {
-      dimension,
-      type,
-      normalize,
-      stride,
-      offset,
-      attributeName
-    } = attr
+    const { dimension, type, normalize, stride, offset, attributeName } = attr
     const attribLocation = shader.getAttribLocation(attributeName)
     // Tells opengl how to populate the shader attribute, then enables it
-    gl.vertexAttribPointer(
-      attribLocation,
-      dimension,
-      type,
-      normalize,
-      stride,
-      offset
-    )
-    gl.enableVertexAttribArray(
-      attribLocation
-    )
+    gl.vertexAttribPointer(attribLocation, dimension, type, normalize, stride, offset)
+    gl.enableVertexAttribArray(attribLocation)
   }
 
   createBuffer = (name: string, data: number[]) => {
