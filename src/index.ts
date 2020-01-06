@@ -1,5 +1,3 @@
-// import { ShaderTypes } from './engine/shader'
-// import { mat4 } from 'gl-matrix'
 import Engine from './engine'
 
 // import * as simpleFrag from './shaders/simple.frag'
@@ -31,47 +29,46 @@ window.onload = () => {
       `
       precision mediump float;
       attribute vec3 aPosition;
-      uniform vec2 uResolution;
-      varying float aColor;
+      varying float vColor;
       void main () {
-        aColor = aPosition.z;
-        vec2 pos = ((aPosition.xy / uResolution) * 2.0 - 1.0) * vec2(1, -1);
+        vColor = aPosition.z;
+        vec2 pos = (aPosition.xy * 2.0 - 1.0) * vec2(1, -1);
         gl_Position = vec4(pos, 0, 1);
       }`,
       `
       precision mediump float;
-      varying float aColor;
+      varying float vColor;
+      uniform vec3 uColor;
       void main () {
-        gl_FragColor = vec4(vec3(0.55, 0.42, 0.90) * aColor, 1);
+        gl_FragColor = vec4(uColor * vColor, 1);
       }
       `,
       {
         aPosition: new VertexAttribute(
           gl,
-          new Float32Array([
-            0, 0, 1,
-            480, 0, 0.5,
-            0, 430, 0.5,
-            0, 430, 0.5,
-            480, 0, 0.5,
-            480, 430, 0,
-          ]),
+          new Float32Array([0, 0, 1, 1, 0, 0.5, 0, 1, 0.5, 0, 1, 0.5, 1, 0, 0.5, 1, 1, 0]),
           {
             dimension: 3
           }
         )
       },
-      ['uResolution']
+      ['uResolution', 'uColor']
     )
-    // simpleMaterial.setAttribute('uResolution', gl.FLOAT_VEC2, gl.canvas.width, gl.canvas.height)
     entities.push(simpleMaterial)
   }
 
-  engine.draw = gl => {
+  engine.draw = (gl, engine) => {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     for (let entity of entities) {
-      entity.setAttribute('uResolution', gl.FLOAT_VEC2, gl.canvas.width, gl.canvas.height)
+      entity.useProgram()
+      entity.setAttribute(
+        'uColor',
+        gl.FLOAT_VEC3,
+        engine.mouse[0] / engine.settings.width,
+        0.42,
+        engine.mouse[1] / engine.settings.height
+      )
       entity.drawUsingAttribute('aPosition')
     }
   }

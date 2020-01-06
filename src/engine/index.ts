@@ -1,97 +1,80 @@
-import setupWebglCanvas, { CanvasSettings } from './canvas'
-import ShaderProgram, { ShaderTypes } from './shader'
+import { v2 } from './v2'
 
-interface EngineSettings extends CanvasSettings {}
-
-interface ShaderMap {
-  [name: string]: WebGLShader
-}
-
-interface ShaderProgramMap {
-  [name: string]: ShaderProgram
-}
-
-interface BufferMap {
-  [name: string]: WebGLBuffer
-}
-
-interface VertexAttribute {
-  dimension: number // How many of the buffer to consume at a time, maps to float, vec2, vec3, vec4...
-  type: number // The dataType of the float
-  normalize: boolean // Normalize the vertices
-  stride: number // how many bytes to get from one set of values to the next. Get by multipying size(type) * (matSize - dimension)
-  offset: number // how many bytes inside the buffer to start from. Get by multipying size(type) * offsetElements
-  attributeName: string // Name of attribute to to bind the vertexes too
+export interface EngineSettings {
+  width?: number
+  height?: number
+  fullscreen?: boolean
 }
 
 export default class Engine {
   public gl: WebGLRenderingContext
-  public shaders: ShaderMap = {}
-  public shaderPrograms: ShaderProgramMap = {}
-  public buffers: BufferMap = {}
+  public mouse: v2 = v2()
+  public touches: v2[] = []
 
-  public canvasSettings: CanvasSettings
-
-  private RAF: number
+  public RAF: number
   constructor(public element: HTMLCanvasElement, public settings: EngineSettings) {
-    this.gl = setupWebglCanvas(element, settings, this.onResize)
+    this.setCanvasSize(settings)
+    const gl = (this.gl = this.element.getContext('webgl'))
+    if (!gl) throw new Error('Could not find webgl context')
+    window.addEventListener('resize', () => {
+      this.setCanvasSize(settings)
+      // Sets internal webgl viewport to be the size of the canvas
+      gl.viewport(0, 0, settings.width, settings.height)
+      this.onResize(gl, this)
+    })
+
+    element.addEventListener('mousemove', e => {
+      if (e.offsetX) {
+        this.mouse.x = e.offsetX
+        this.mouse.y = e.offsetY
+      }
+    })
+
+    element.addEventListener('click', e => {
+      this.onClick(gl, this)
+    })
+
+    element.addEventListener('touchstart', e => {
+      this.updateTouches(e)
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i]
+        if (i === 0) {
+          this.mouse.x = touch.pageX
+          this.mouse.y = touch.pageY
+        }
+      }
+    })
+
+    element.addEventListener('touchend', e => {
+      this.updateTouches(e)
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i]
+        if (i === 0) {
+          this.mouse.x = touch.pageX
+          this.mouse.y = touch.pageY
+        }
+      }
+      this.onClick(gl, this)
+    })
+
+    element.addEventListener('touchmove', e => {
+      this.updateTouches(e)
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i]
+        if (i === 0) {
+          this.mouse.x = touch.pageX
+          this.mouse.y = touch.pageY
+        }
+      }
+    })
+
+    element.addEventListener('contextmenu', e => e.preventDefault())
+    element.addEventListener('dragenter', e => e.preventDefault())
   }
 
-  compileShader = (name: string, src: string, shaderType: ShaderTypes): WebGLShader => {
-    const { gl, shaders } = this
-    const compiledShader: WebGLShader = gl.createShader(
-      shaderType === ShaderTypes.Fragment ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER
-    )
-    gl.shaderSource(compiledShader, src)
-    gl.compileShader(compiledShader)
-    if (!gl.getShaderParameter(compiledShader, gl.COMPILE_STATUS)) {
-      const error = new Error(gl.getShaderInfoLog(compiledShader))
-      gl.deleteShader(compiledShader)
-      throw error
-    }
-    shaders[name] = compiledShader
-    return shaders[name]
-  }
-
-  initShaderProgram = (
-    name: string,
-    vertexShader: WebGLProgram,
-    fragmentShader: WebGLProgram
-  ): ShaderProgram => {
-    const { gl, shaderPrograms } = this
-    const shaderProgram: WebGLProgram = gl.createProgram()
-    gl.attachShader(shaderProgram, vertexShader)
-    gl.attachShader(shaderProgram, fragmentShader)
-    gl.linkProgram(shaderProgram)
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      throw new Error(gl.getProgramInfoLog(shaderProgram))
-    }
-
-    shaderPrograms[name] = new ShaderProgram(shaderProgram, gl)
-    return shaderPrograms[name]
-  }
-
-  loadBuffer = (buffer: WebGLBuffer) => {
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer)
-  }
-
-  bindVertexAttrib = (attr: VertexAttribute, shader: ShaderProgram) => {
-    const { gl } = this
-    const { dimension, type, normalize, stride, offset, attributeName } = attr
-    const attribLocation = shader.getAttribLocation(attributeName)
-    // Tells opengl how to populate the shader attribute, then enables it
-    gl.vertexAttribPointer(attribLocation, dimension, type, normalize, stride, offset)
-    gl.enableVertexAttribArray(attribLocation)
-  }
-
-  createBuffer = (name: string, data: number[]) => {
-    const { gl, buffers } = this
-    const buffer = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW)
-    buffers[name] = buffer
-    return buffers[name]
+  public updateTouches = (e: TouchEvent) => {
+    e.preventDefault()
+    this.touches = [...(e.touches as any)].map(touch => v2(touch.pageX, touch.pageY))
   }
 
   render = () => {
@@ -106,5 +89,22 @@ export default class Engine {
 
   draw = (gl: WebGLRenderingContext, e: Engine) => {}
   init = (gl: WebGLRenderingContext, e: Engine) => {}
-  onResize = () => {}
+  onResize = (gl: WebGLRenderingContext, e: Engine) => {}
+  onClick = (gl: WebGLRenderingContext, e: Engine) => {}
+
+  private setCanvasDimensions = (maxWidth: number, maxHeight: number) => {
+    const element = this.element
+    element.width = maxWidth
+    element.height = maxHeight
+    element.style.width = `${maxWidth}`
+    element.style.height = `${maxHeight}`
+  }
+
+  private setCanvasSize = (settings: EngineSettings) => {
+    if (!!settings.fullscreen) {
+      settings.width = window.innerWidth
+      settings.height = window.innerHeight
+    }
+    this.setCanvasDimensions(settings.width, settings.height)
+  }
 }

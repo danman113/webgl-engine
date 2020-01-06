@@ -4,12 +4,10 @@ export enum ShaderTypes {
   Vertex = 'VERTEX'
 }
 
-const UniformTypeToLocation: (
-  gl: WebGLRenderingContext
-) => { [type: number]: string } = gl => ({
+const UniformTypeToLocation: (gl: WebGLRenderingContext) => { [type: number]: string } = gl => ({
   [gl.FLOAT]: 'uniform1f',
   [gl.FLOAT_VEC2]: 'uniform2f',
-  [gl.FLOAT_VEC3]: 'uniform3fv'
+  [gl.FLOAT_VEC3]: 'uniform3f'
 })
 
 interface UniformLocationMap {
@@ -68,13 +66,14 @@ export default class Material {
     ;(this.gl as any)[UniformTypeToLocation(this.gl)[attrType]](uniformLocation, ...rest)
   }
 
+  useProgram = () => this.gl.useProgram(this.program)
+
   drawUsingAttribute = (
     attrName: string,
     drawType: GLenum = this.gl.TRIANGLES,
     offset: number = 0
   ) => {
     const attr = this.attributes[attrName]
-    this.gl.useProgram(this.program)
     this.bindAttributes()
     this.gl.drawArrays(
       this.gl.TRIANGLES,
