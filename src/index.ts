@@ -17,7 +17,7 @@ interface Entity {
   attr: VertexAttribute
 }
 
-let entities: Entity[] = []
+let entities: Material[] = []
 
 window.onload = () => {
   const engine = new Engine(<HTMLCanvasElement>document.getElementById('webgl'), {
@@ -31,10 +31,12 @@ window.onload = () => {
       `
       precision mediump float;
       attribute vec3 aPosition;
+      uniform vec2 uResolution;
       varying float aColor;
       void main () {
         aColor = aPosition.z;
-        gl_Position = vec4(aPosition.x, aPosition.y, 0, 1);
+        vec2 pos = ((aPosition.xy / uResolution) * 2.0 - 1.0) * vec2(1, -1);
+        gl_Position = vec4(pos, 0, 1);
       }`,
       `
       precision mediump float;
@@ -43,25 +45,34 @@ window.onload = () => {
         gl_FragColor = vec4(vec3(0.55, 0.42, 0.90) * aColor, 1);
       }
       `,
-      ['aPosition']
-    )
-    let aPosition = new VertexAttribute(
-      gl,
-      new Float32Array([0, 0.5, 0.5, 0.5, -0.5, 0, -0.5, -0.5, 1]),
       {
-        dimension: 3
-      }
+        aPosition: new VertexAttribute(
+          gl,
+          new Float32Array([
+            0, 0, 1,
+            480, 0, 0.5,
+            0, 430, 0.5,
+            0, 430, 0.5,
+            480, 0, 0.5,
+            480, 430, 0,
+          ]),
+          {
+            dimension: 3
+          }
+        )
+      },
+      ['uResolution']
     )
-    entities.push({ mat: simpleMaterial, attr: aPosition })
+    // simpleMaterial.setAttribute('uResolution', gl.FLOAT_VEC2, gl.canvas.width, gl.canvas.height)
+    entities.push(simpleMaterial)
   }
 
   engine.draw = gl => {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     for (let entity of entities) {
-      gl.useProgram(entity.mat.program)
-      entity.mat.bindAttribute('aPosition', entity.attr)
-      gl.drawArrays(gl.TRIANGLES, 0, 3)
+      entity.setAttribute('uResolution', gl.FLOAT_VEC2, gl.canvas.width, gl.canvas.height)
+      entity.drawUsingAttribute('aPosition')
     }
   }
   engine.start()

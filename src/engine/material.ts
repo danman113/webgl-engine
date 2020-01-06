@@ -4,63 +4,82 @@ export enum ShaderTypes {
   Vertex = 'VERTEX'
 }
 
+const UniformTypeToLocation: (
+  gl: WebGLRenderingContext
+) => { [type: number]: string } = gl => ({
+  [gl.FLOAT]: 'uniform1f',
+  [gl.FLOAT_VEC2]: 'uniform2f',
+  [gl.FLOAT_VEC3]: 'uniform3fv'
+})
+
 interface UniformLocationMap {
   [name: string]: WebGLUniformLocation
 }
 
-interface AttributeLocationMap {
-  [name: string]: number
+interface AttributeMap {
+  [name: string]: VertexAttribute
 }
 
 export default class Material {
   public vertexShader: WebGLShader
   public fragmentShader: WebGLShader
   public program: WebGLProgram
-  public uniformsMap: UniformLocationMap = {}
-  public attributesMap: AttributeLocationMap = {}
+  public uniformLocations: UniformLocationMap = {}
 
   constructor(
     public gl: WebGLRenderingContext,
     public vertexSource: string,
     public fragmentSource: string,
-    attributeNames: string[],
+    public attributes: AttributeMap,
     uniformNames: string[] = []
   ) {
     this.vertexShader = this.compileShader(vertexSource, ShaderTypes.Vertex)
     this.fragmentShader = this.compileShader(fragmentSource, ShaderTypes.Fragment)
     this.program = this.initShaderProgram(this.vertexShader, this.fragmentShader)
-    for (let attr of attributeNames) {
+    for (let attr in attributes) {
       const location = this.gl.getAttribLocation(this.program, attr)
-      this.attributesMap[attr] = location
+      attributes[attr].location = location
     }
 
     for (let uniform of uniformNames) {
-      const location = this.gl.getAttribLocation(this.program, uniform)
-      this.uniformsMap[uniform] = location
+      const location = this.gl.getUniformLocation(this.program, uniform)
+      this.uniformLocations[uniform] = location
     }
   }
 
-  private getAttribLocation = (name: string) => {
-    const { attributesMap } = this
-    if (attributesMap[name] >= 0) {
-      return attributesMap[name]
-    } else {
-      throw Error(`Attribute Location ${name} has not been initialized`)
+  bindAttributes = () => {
+    for (let attrName in this.attributes) {
+      const attr = this.attributes[attrName]
+      this.gl.enableVertexAttribArray(attr.location)
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, attr.buffer)
+      this.gl.vertexAttribPointer(
+        attr.location,
+        attr.vertexAttributeMetadata.dimension,
+        attr.vertexAttributeMetadata.type,
+        attr.vertexAttributeMetadata.normalize,
+        attr.vertexAttributeMetadata.stride,
+        attr.vertexAttributeMetadata.offset
+      )
     }
   }
 
-  bindAttribute = (attrName: string, attr: VertexAttribute) => {
-    const attrLocation = this.getAttribLocation(attrName)
-    console.log(`Binding attribute ${attrName}`)
-    this.gl.enableVertexAttribArray(attrLocation)
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, attr.buffer)
-    this.gl.vertexAttribPointer(
-      attrLocation,
-      attr.vertexAttributeMetadata.dimension,
-      attr.vertexAttributeMetadata.type,
-      attr.vertexAttributeMetadata.normalize,
-      attr.vertexAttributeMetadata.stride,
-      attr.vertexAttributeMetadata.offset
+  setAttribute = (attrName: string, attrType: GLenum, ...rest: any[]) => {
+    const uniformLocation = this.uniformLocations[attrName]
+    ;(this.gl as any)[UniformTypeToLocation(this.gl)[attrType]](uniformLocation, ...rest)
+  }
+
+  drawUsingAttribute = (
+    attrName: string,
+    drawType: GLenum = this.gl.TRIANGLES,
+    offset: number = 0
+  ) => {
+    const attr = this.attributes[attrName]
+    this.gl.useProgram(this.program)
+    this.bindAttributes()
+    this.gl.drawArrays(
+      this.gl.TRIANGLES,
+      offset,
+      attr.data.length / attr.vertexAttributeMetadata.dimension
     )
   }
 

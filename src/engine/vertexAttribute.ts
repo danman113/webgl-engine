@@ -9,9 +9,10 @@ interface VertexAttributeMetadata {
 export default class VertexAttribute {
   public buffer: WebGLBuffer
   public vertexAttributeMetadata: VertexAttributeMetadata
+  public location: GLenum = null
   constructor(
     gl: WebGLRenderingContext,
-    data: Float32Array,
+    public data: Float32Array,
     {
       dimension,
       type = gl.FLOAT,
