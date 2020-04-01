@@ -1,19 +1,6 @@
 import Engine from './engine'
-
-// import * as simpleFrag from './shaders/simple.frag'
-
-// import * as simpleVert from './shaders/simple.vert'
 import Material from './engine/material'
 import VertexAttribute from './engine/vertexAttribute'
-
-// console.log(simpleFrag)
-
-// console.log(simpleVert)
-
-interface Entity {
-  mat: Material
-  attr: VertexAttribute
-}
 
 let entities: Material[] = []
 
@@ -52,7 +39,7 @@ window.onload = () => {
           }
         )
       },
-      ['uResolution', 'uColor']
+      ['uColor']
     )
     entities.push(simpleMaterial)
   }

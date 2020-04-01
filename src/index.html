@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>WebGL Demo</title>
+  <title><%= htmlWebpackPlugin.options.title %></title>
   <style>
     body {
       margin: 0;
       padding: 0;
-    }
-    
-    #webgl {
-      background-color: black;
-      cursor: initial;
-      position: absolute;
+      font-family: sans-serif;
     }
   </style>
 </head>
+
 <body>
   <div>
-    <canvas id="webgl">
-      Get a <a href='https://www.mozilla.org/en-US/firefox/download/thanks/'>better browser</a>.
-    </canvas>
+    <h1>Webgl Engine</h1>
+    <h3>A simple Webgl Engine I wrote to get better at webgl</h3>
   </div>
+  <ul>
+    <%= htmlWebpackPlugin.options.folders.map(folder => `<li><a href="${folder}.html">${folder}</a></li>`).join('') %>
+  </ul>
 </body>
+
 </html>

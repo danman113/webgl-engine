@@ -75,11 +75,7 @@ export default class Material {
   ) => {
     const attr = this.attributes[attrName]
     this.bindAttributes()
-    this.gl.drawArrays(
-      this.gl.TRIANGLES,
-      offset,
-      attr.data.length / attr.vertexAttributeMetadata.dimension
-    )
+    this.gl.drawArrays(drawType, offset, attr.data.length / attr.vertexAttributeMetadata.dimension)
   }
 
   private compileShader = (src: string, shaderType: ShaderTypes): WebGLShader => {

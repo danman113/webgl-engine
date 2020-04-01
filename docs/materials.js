@@ -81,10 +81,228 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.ts");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./examples/materials/index.ts");
 /******/ })
 /************************************************************************/
 /******/ ({
+
+/***/ "./examples/materials/imageExample/image.frag":
+/*!****************************************************!*\
+  !*** ./examples/materials/imageExample/image.frag ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nvarying vec2 vTextcoord;\nuniform vec3 uColor;\nuniform sampler2D uImage;\n\nvoid main () {\n  vec4 tex = texture2D(uImage, vTextcoord);\n  gl_FragColor = vec4(\n    tex.r * max(uColor.r, 0.5), // Half the red depending on the mouse\n    tex.g,\n    tex.b * max(uColor.b, 0.5), // Half the blue depending on the mouse\n    tex.a // Will probably always be one, but in the case that we get a PNG\n  );\n}"
+
+/***/ }),
+
+/***/ "./examples/materials/imageExample/image.vert":
+/*!****************************************************!*\
+  !*** ./examples/materials/imageExample/image.vert ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nattribute vec2 aPosition;\nattribute vec2 aTextcoord;\nvarying vec2 vTextcoord;\n\nvoid main () {\n  vTextcoord = aTextcoord;\n  vec2 pos = (aPosition.xy * 2.0 - 1.0) * vec2(1, -1);\n  gl_Position = vec4(pos, 0, 1);\n}\n"
+
+/***/ }),
+
+/***/ "./examples/materials/imageExample/img.jpg":
+/*!*************************************************!*\
+  !*** ./examples/materials/imageExample/img.jpg ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "c72192d9f5410ff728784c1dbdcc7bf3.jpg");
+
+/***/ }),
+
+/***/ "./examples/materials/imageExample/index.ts":
+/*!**************************************************!*\
+  !*** ./examples/materials/imageExample/index.ts ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var material_1 = __webpack_require__(/*! ../../../src/engine/material */ "./src/engine/material.ts");
+var vertexAttribute_1 = __webpack_require__(/*! ../../../src/engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
+var texture_1 = __webpack_require__(/*! ../../../src/engine/texture */ "./src/engine/texture.ts");
+var materialExample_1 = __webpack_require__(/*! ../materialExample */ "./examples/materials/materialExample.ts");
+var FragmentSource = __webpack_require__(/*! ./image.frag */ "./examples/materials/imageExample/image.frag");
+var VertexSource = __webpack_require__(/*! ./image.vert */ "./examples/materials/imageExample/image.vert");
+var img_jpg_1 = __webpack_require__(/*! ./img.jpg */ "./examples/materials/imageExample/img.jpg");
+var texture = new texture_1.ImageTexture(img_jpg_1.default);
+var example = new materialExample_1.default('Texture Example', function (gl) {
+    var mat = new material_1.default(gl, VertexSource, FragmentSource, {
+        aPosition: new vertexAttribute_1.default(gl, 
+        // prettier-ignore
+        new Float32Array([
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1,
+        ]), {
+            dimension: 2
+        }),
+        aTextcoord: new vertexAttribute_1.default(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), {
+            dimension: 2
+        })
+    }, ['uColor']);
+    texture.bindTexture(gl);
+    return mat;
+}, function (gl, material, engine) {
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    material.useProgram();
+    material.setAttribute('uColor', gl.FLOAT_VEC3, engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
+    0.42, engine.mouse[1] / engine.settings.height // Percentage of mouse to last y coord
+    );
+    material.drawUsingAttribute('aPosition');
+});
+exports.default = example;
+
+
+/***/ }),
+
+/***/ "./examples/materials/index.ts":
+/*!*************************************!*\
+  !*** ./examples/materials/index.ts ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {
+Object.defineProperty(exports, "__esModule", { value: true });
+var engine_1 = __webpack_require__(/*! ./../../src/engine */ "./src/engine/index.ts");
+var mouseGradientExample_1 = __webpack_require__(/*! ./mouseGradientExample */ "./examples/materials/mouseGradientExample/index.ts");
+var imageExample_1 = __webpack_require__(/*! ./imageExample */ "./examples/materials/imageExample/index.ts");
+var entities = [mouseGradientExample_1.default, imageExample_1.default];
+var selectedEntity = entities[0];
+var list = document.createElement('ul');
+var listElements = entities.map(function (entity, i) {
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.textContent = entity.name;
+    a.addEventListener('click', function (e) {
+        e.preventDefault();
+        selectedEntity = entities[i];
+        console.log(i);
+    });
+    li.append(a);
+    return li;
+});
+list.append.apply(list, listElements);
+window.onload = function () {
+    document.body.append(list);
+    var engine = new engine_1.default(document.getElementById('webgl'), {
+        fullscreen: true
+    });
+    engine.init = function (gl) {
+        global.engine = engine;
+        entities.forEach(function (ent) { return ent.onload(gl); });
+    };
+    engine.draw = function (gl, engine) {
+        if (selectedEntity) {
+            selectedEntity.draw(gl, selectedEntity.material, engine);
+        }
+    };
+    engine.start();
+};
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./examples/materials/materialExample.ts":
+/*!***********************************************!*\
+  !*** ./examples/materials/materialExample.ts ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var MaterialExample = /** @class */ (function () {
+    function MaterialExample(name, setup, draw) {
+        this.name = name;
+        this.setup = setup;
+        this.draw = draw;
+    }
+    MaterialExample.prototype.onload = function (gl) {
+        this.material = this.setup(gl);
+    };
+    return MaterialExample;
+}());
+exports.default = MaterialExample;
+
+
+/***/ }),
+
+/***/ "./examples/materials/mouseGradientExample/index.ts":
+/*!**********************************************************!*\
+  !*** ./examples/materials/mouseGradientExample/index.ts ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var material_1 = __webpack_require__(/*! ../../../src/engine/material */ "./src/engine/material.ts");
+var vertexAttribute_1 = __webpack_require__(/*! ../../../src/engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
+var materialExample_1 = __webpack_require__(/*! ../materialExample */ "./examples/materials/materialExample.ts");
+var FragmentSource = __webpack_require__(/*! ./mouseGradient.frag */ "./examples/materials/mouseGradientExample/mouseGradient.frag");
+var VertexSource = __webpack_require__(/*! ./mouseGradient.vert */ "./examples/materials/mouseGradientExample/mouseGradient.vert");
+var example = new materialExample_1.default('Mouse Gradient', function (gl) {
+    return new material_1.default(gl, VertexSource, FragmentSource, {
+        aPosition: new vertexAttribute_1.default(gl, new Float32Array([0, 0, 1, 1, 0, 0.5, 0, 1, 0.5, 0, 1, 0.5, 1, 0, 0.5, 1, 1, 0]), {
+            dimension: 3
+        })
+    }, ['uColor']);
+}, function (gl, material, engine) {
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    material.useProgram();
+    material.setAttribute('uColor', gl.FLOAT_VEC3, engine.mouse.x / engine.settings.width, 0.42, engine.mouse.y / engine.settings.height);
+    material.drawUsingAttribute('aPosition');
+});
+exports.default = example;
+
+
+/***/ }),
+
+/***/ "./examples/materials/mouseGradientExample/mouseGradient.frag":
+/*!********************************************************************!*\
+  !*** ./examples/materials/mouseGradientExample/mouseGradient.frag ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nvarying float vColor;\nuniform vec3 uColor;\nvoid main () {\n  gl_FragColor = vec4(uColor * vColor, 1);\n}"
+
+/***/ }),
+
+/***/ "./examples/materials/mouseGradientExample/mouseGradient.vert":
+/*!********************************************************************!*\
+  !*** ./examples/materials/mouseGradientExample/mouseGradient.vert ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nattribute vec3 aPosition;\nvarying float vColor;\nvoid main () {\n  vColor = aPosition.z;\n  vec2 pos = (aPosition.xy * 2.0 - 1.0) * vec2(1, -1);\n  gl_Position = vec4(pos, 0, 1);\n}"
+
+/***/ }),
 
 /***/ "./node_modules/webpack/buildin/global.js":
 /*!***********************************!*\
@@ -294,7 +512,7 @@ var Material = /** @class */ (function () {
             if (offset === void 0) { offset = 0; }
             var attr = _this.attributes[attrName];
             _this.bindAttributes();
-            _this.gl.drawArrays(_this.gl.TRIANGLES, offset, attr.data.length / attr.vertexAttributeMetadata.dimension);
+            _this.gl.drawArrays(drawType, offset, attr.data.length / attr.vertexAttributeMetadata.dimension);
         };
         this.compileShader = function (src, shaderType) {
             var gl = _this.gl;
@@ -341,6 +559,89 @@ exports.default = Material;
 
 /***/ }),
 
+/***/ "./src/engine/texture.ts":
+/*!*******************************!*\
+  !*** ./src/engine/texture.ts ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var textureSource = 0;
+var Texture = /** @class */ (function () {
+    function Texture() {
+        this.textureSource = textureSource++;
+        this.loaded = true;
+    }
+    Texture.prototype.bindTexture = function (gl) {
+        if (!this.loaded)
+            throw new Error('Attempted to bind image to texture before it loads. Make sure the image is loaded by the time you call bindTexture');
+        var texture = gl.createTexture();
+        this._texture = texture;
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texImage2D(gl.TEXTURE_2D, this.textureSource, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
+        return texture;
+    };
+    Texture.prototype.delete = function (gl) {
+        gl.deleteTexture(this._texture);
+        this.loaded = false;
+    };
+    return Texture;
+}());
+exports.default = Texture;
+var CanvasTexture = /** @class */ (function (_super) {
+    __extends(CanvasTexture, _super);
+    function CanvasTexture(context) {
+        var _this = _super.call(this) || this;
+        _this.texture = context.canvas;
+        return _this;
+    }
+    CanvasTexture.prototype.rebindTexture = function (gl) {
+        gl.texImage2D(gl.TEXTURE_2D, this.textureSource, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
+    };
+    return CanvasTexture;
+}(Texture));
+exports.CanvasTexture = CanvasTexture;
+var ImageTexture = /** @class */ (function (_super) {
+    __extends(ImageTexture, _super);
+    function ImageTexture(source) {
+        var _this = _super.call(this) || this;
+        _this.source = source;
+        _this.loaded = false;
+        var image = new Image();
+        image.src = source;
+        image.onload = function () {
+            _this.loaded = true;
+        };
+        _this.texture = image;
+        return _this;
+    }
+    return ImageTexture;
+}(Texture));
+exports.ImageTexture = ImageTexture;
+
+
+/***/ }),
+
 /***/ "./src/engine/v2.ts":
 /*!**************************!*\
   !*** ./src/engine/v2.ts ***!
@@ -375,6 +676,47 @@ exports.v2 = function (x, y) {
     Object.defineProperty(out, 'y', yProperty);
     return out;
 };
+exports.ZERO = exports.v2();
+// Eucliean distance between two points
+exports.distance = function (pt1, pt2) {
+    return Math.sqrt((pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
+};
+exports.distanceSquared = function (pt1, pt2) {
+    return (pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y);
+};
+// Magnitude
+exports.magnitude = function (v) { return exports.distance(v, exports.ZERO); };
+// Given the three points, are they counter clockwise?
+exports.ccw = function (a, b, c) {
+    return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+};
+// Angle between two points in radians
+exports.angle2 = function (a, b) { return Math.atan2(b.y - a.y, b.x - a.x); };
+// Angle between three points in radians
+exports.angle3 = function (a, b, c) {
+    return Math.atan2(a.y - b.y, a.x - b.x) - Math.atan2(c.y - b.y, c.x - b.x);
+};
+exports.piNum = Math.PI / 180;
+exports.numPi = 180 / Math.PI;
+exports.degToRad = function (deg) { return deg * exports.piNum; };
+exports.radToDeg = function (rad) { return rad * exports.numPi; };
+exports.sum = function (a, b) { return exports.v2(a.x + b.x, a.y + b.y); };
+exports.sub = function (a, b) { return exports.v2(a.x - b.x, a.y - b.y); };
+exports.dot = function (a, b) { return a.x * b.x + a.y * b.y; };
+exports.unit = function (a) {
+    var dist = exports.distance(exports.ZERO, a);
+    return exports.v2(a.x / dist, a.y / dist);
+};
+exports.normal = function (p0, p1) {
+    // if we define dx=x2-x1 and dy=y2-y1, then the normals are (-dy, dx) and (dy, -dx).
+    var dx = p1.x - p0.x;
+    var dy = p1.y - p0.y;
+    // orthoginal(sub(p1, p0))
+    return exports.v2(-dy, dx);
+};
+exports.orthogonal = function (v) { return exports.v2(-v.y, v.x); };
+exports.scalarMultiply = function (a, c) { return exports.v2(a.x * c, a.y * c); };
+exports.scalarSum = function (a, c) { return exports.v2(a.x + c, a.y + c); };
 
 
 /***/ }),
@@ -406,53 +748,7 @@ var VertexAttribute = /** @class */ (function () {
 exports.default = VertexAttribute;
 
 
-/***/ }),
-
-/***/ "./src/index.ts":
-/*!**********************!*\
-  !*** ./src/index.ts ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(global) {
-Object.defineProperty(exports, "__esModule", { value: true });
-var engine_1 = __webpack_require__(/*! ./engine */ "./src/engine/index.ts");
-// import * as simpleFrag from './shaders/simple.frag'
-// import * as simpleVert from './shaders/simple.vert'
-var material_1 = __webpack_require__(/*! ./engine/material */ "./src/engine/material.ts");
-var vertexAttribute_1 = __webpack_require__(/*! ./engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
-var entities = [];
-window.onload = function () {
-    var engine = new engine_1.default(document.getElementById('webgl'), {
-        fullscreen: true
-    });
-    engine.init = function (gl) {
-        global.engine = engine;
-        var simpleMaterial = new material_1.default(gl, "\n      precision mediump float;\n      attribute vec3 aPosition;\n      varying float vColor;\n      void main () {\n        vColor = aPosition.z;\n        vec2 pos = (aPosition.xy * 2.0 - 1.0) * vec2(1, -1);\n        gl_Position = vec4(pos, 0, 1);\n      }", "\n      precision mediump float;\n      varying float vColor;\n      uniform vec3 uColor;\n      void main () {\n        gl_FragColor = vec4(uColor * vColor, 1);\n      }\n      ", {
-            aPosition: new vertexAttribute_1.default(gl, new Float32Array([0, 0, 1, 1, 0, 0.5, 0, 1, 0.5, 0, 1, 0.5, 1, 0, 0.5, 1, 1, 0]), {
-                dimension: 3
-            })
-        }, ['uResolution', 'uColor']);
-        entities.push(simpleMaterial);
-    };
-    engine.draw = function (gl, engine) {
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        for (var _i = 0, entities_1 = entities; _i < entities_1.length; _i++) {
-            var entity = entities_1[_i];
-            entity.useProgram();
-            entity.setAttribute('uColor', gl.FLOAT_VEC3, engine.mouse[0] / engine.settings.width, 0.42, engine.mouse[1] / engine.settings.height);
-            entity.drawUsingAttribute('aPosition');
-        }
-    };
-    engine.start();
-};
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
-
 /***/ })
 
 /******/ });
-//# sourceMappingURL=out.js.map
+//# sourceMappingURL=materials.js.map
