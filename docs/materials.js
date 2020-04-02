@@ -156,14 +156,14 @@ var example = new materialExample_1.default('Texture Example', function (gl) {
         aTextcoord: new vertexAttribute_1.default(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), {
             dimension: 2
         })
-    }, ['uColor']);
+    });
     texture.bindTexture(gl);
     return mat;
 }, function (gl, material, engine) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     material.useProgram();
-    material.setAttribute('uColor', gl.FLOAT_VEC3, engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
+    material.setUniform('uColor', gl.FLOAT_VEC3, engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
     0.42, engine.mouse[1] / engine.settings.height // Percentage of mouse to last y coord
     );
     material.drawUsingAttribute('aPosition');
@@ -196,7 +196,6 @@ var listElements = entities.map(function (entity, i) {
     a.addEventListener('click', function (e) {
         e.preventDefault();
         selectedEntity = entities[i];
-        console.log(i);
     });
     li.append(a);
     return li;
@@ -269,12 +268,12 @@ var example = new materialExample_1.default('Mouse Gradient', function (gl) {
         aPosition: new vertexAttribute_1.default(gl, new Float32Array([0, 0, 1, 1, 0, 0.5, 0, 1, 0.5, 0, 1, 0.5, 1, 0, 0.5, 1, 1, 0]), {
             dimension: 3
         })
-    }, ['uColor']);
+    });
 }, function (gl, material, engine) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     material.useProgram();
-    material.setAttribute('uColor', gl.FLOAT_VEC3, engine.mouse.x / engine.settings.width, 0.42, engine.mouse.y / engine.settings.height);
+    material.setUniform('uColor', gl.FLOAT_VEC3, engine.mouse.x / engine.settings.width, 0.42, engine.mouse.y / engine.settings.height);
     material.drawUsingAttribute('aPosition');
 });
 exports.default = example;
@@ -359,6 +358,7 @@ var Engine = /** @class */ (function () {
         this.element = element;
         this.settings = settings;
         this.mouse = v2_1.v2();
+        this.keys = new Set();
         this.touches = [];
         this.updateTouches = function (e) {
             e.preventDefault();
@@ -376,12 +376,14 @@ var Engine = /** @class */ (function () {
         this.init = function (gl, e) { };
         this.onResize = function (gl, e) { };
         this.onClick = function (gl, e) { };
+        this.onKeyDown = function (gl, e, keyCode) { };
+        this.onKeyUp = function (gl, e, keyCode) { };
         this.setCanvasDimensions = function (maxWidth, maxHeight) {
             var element = _this.element;
             element.width = maxWidth;
             element.height = maxHeight;
-            element.style.width = "" + maxWidth;
-            element.style.height = "" + maxHeight;
+            element.style.width = String(maxWidth);
+            element.style.height = String(maxHeight);
         };
         this.setCanvasSize = function (settings) {
             if (!!settings.fullscreen) {
@@ -440,6 +442,18 @@ var Engine = /** @class */ (function () {
                 }
             }
         });
+        element.addEventListener('keydown', function (e) {
+            e.preventDefault();
+            var keyCode = e.keyCode;
+            _this.keys.add(keyCode);
+            _this.onKeyDown(_this.gl, _this, keyCode);
+        });
+        element.addEventListener('keyup', function (e) {
+            e.preventDefault();
+            var keyCode = e.keyCode;
+            _this.keys.delete(keyCode);
+            _this.onKeyUp(_this.gl, _this, keyCode);
+        });
         element.addEventListener('contextmenu', function (e) { return e.preventDefault(); });
         element.addEventListener('dragenter', function (e) { return e.preventDefault(); });
     }
@@ -481,9 +495,8 @@ var UniformTypeToLocation = function (gl) {
         _a);
 };
 var Material = /** @class */ (function () {
-    function Material(gl, vertexSource, fragmentSource, attributes, uniformNames) {
+    function Material(gl, vertexSource, fragmentSource, attributes) {
         var _this = this;
-        if (uniformNames === void 0) { uniformNames = []; }
         this.gl = gl;
         this.vertexSource = vertexSource;
         this.fragmentSource = fragmentSource;
@@ -497,7 +510,7 @@ var Material = /** @class */ (function () {
                 _this.gl.vertexAttribPointer(attr.location, attr.vertexAttributeMetadata.dimension, attr.vertexAttributeMetadata.type, attr.vertexAttributeMetadata.normalize, attr.vertexAttributeMetadata.stride, attr.vertexAttributeMetadata.offset);
             }
         };
-        this.setAttribute = function (attrName, attrType) {
+        this.setUniform = function (attrName, attrType) {
             var _a;
             var rest = [];
             for (var _i = 2; _i < arguments.length; _i++) {
@@ -546,10 +559,11 @@ var Material = /** @class */ (function () {
             var location_1 = this.gl.getAttribLocation(this.program, attr);
             attributes[attr].location = location_1;
         }
-        for (var _i = 0, uniformNames_1 = uniformNames; _i < uniformNames_1.length; _i++) {
-            var uniform = uniformNames_1[_i];
-            var location_2 = this.gl.getUniformLocation(this.program, uniform);
-            this.uniformLocations[uniform] = location_2;
+        var uniformCount = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
+        for (var i = 0; i < uniformCount; i++) {
+            var _a = gl.getActiveUniform(this.program, i), uniformName = _a.name, type = _a.type, size = _a.size;
+            var location_2 = this.gl.getUniformLocation(this.program, uniformName);
+            this.uniformLocations[uniformName] = location_2;
         }
     }
     return Material;
@@ -597,7 +611,7 @@ var Texture = /** @class */ (function () {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texImage2D(gl.TEXTURE_2D, this.textureSource, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
         return texture;
     };
@@ -652,6 +666,7 @@ exports.ImageTexture = ImageTexture;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+// Note that we need these to be *function* declarations due to this binding
 function getx() {
     return this[0];
 }
@@ -668,19 +683,21 @@ function sety(val) {
 }
 var xProperty = { get: getx, set: setx };
 var yProperty = { get: gety, set: sety };
+if (!Array.prototype.x) {
+    Object.defineProperty(Array.prototype, 'x', xProperty);
+    Object.defineProperty(Array.prototype, 'y', yProperty);
+}
 exports.v2 = function (x, y) {
     if (x === void 0) { x = 0; }
     if (y === void 0) { y = 0; }
-    var out = [x, y];
-    Object.defineProperty(out, 'x', xProperty);
-    Object.defineProperty(out, 'y', yProperty);
-    return out;
+    return [x, y];
 };
 exports.ZERO = exports.v2();
-// Eucliean distance between two points
+// Euclidean distance between two points
 exports.distance = function (pt1, pt2) {
     return Math.sqrt((pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
 };
+// Faster than distance
 exports.distanceSquared = function (pt1, pt2) {
     return (pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y);
 };
@@ -700,9 +717,9 @@ exports.piNum = Math.PI / 180;
 exports.numPi = 180 / Math.PI;
 exports.degToRad = function (deg) { return deg * exports.piNum; };
 exports.radToDeg = function (rad) { return rad * exports.numPi; };
+exports.dot = function (a, b) { return a.x * b.x + a.y * b.y; };
 exports.sum = function (a, b) { return exports.v2(a.x + b.x, a.y + b.y); };
 exports.sub = function (a, b) { return exports.v2(a.x - b.x, a.y - b.y); };
-exports.dot = function (a, b) { return a.x * b.x + a.y * b.y; };
 exports.unit = function (a) {
     var dist = exports.distance(exports.ZERO, a);
     return exports.v2(a.x / dist, a.y / dist);

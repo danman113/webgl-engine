@@ -14,7 +14,6 @@ const listElements = entities.map((entity, i) => {
   a.addEventListener('click', e => {
     e.preventDefault()
     selectedEntity = entities[i]
-    console.log(i)
   })
   li.append(a)
   return li

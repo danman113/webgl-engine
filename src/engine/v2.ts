@@ -3,6 +3,7 @@ export interface v2 extends Array<number> {
   y?: number
 }
 
+// Note that we need these to be *function* declarations due to this binding
 function getx() {
   return this[0]
 }

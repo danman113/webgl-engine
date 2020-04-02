@@ -38,8 +38,7 @@ window.onload = () => {
             dimension: 3
           }
         )
-      },
-      ['uColor']
+      }
     )
     entities.push(simpleMaterial)
   }
@@ -49,7 +48,7 @@ window.onload = () => {
     gl.clear(gl.COLOR_BUFFER_BIT)
     for (let entity of entities) {
       entity.useProgram()
-      entity.setAttribute(
+      entity.setUniform(
         'uColor',
         gl.FLOAT_VEC3,
         engine.mouse[0] / engine.settings.width,

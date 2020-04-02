@@ -67,7 +67,7 @@ window.onload = () => {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     for (let entity of entities) {
       entity.useProgram()
-      entity.setAttribute(
+      entity.setUniform(
         'uColor',
         gl.FLOAT_VEC3,
         engine.mouse[0] / engine.settings.width,

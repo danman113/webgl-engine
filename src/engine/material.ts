@@ -28,8 +28,7 @@ export default class Material {
     public gl: WebGLRenderingContext,
     public vertexSource: string,
     public fragmentSource: string,
-    public attributes: AttributeMap,
-    uniformNames: string[] = []
+    public attributes: AttributeMap
   ) {
     this.vertexShader = this.compileShader(vertexSource, ShaderTypes.Vertex)
     this.fragmentShader = this.compileShader(fragmentSource, ShaderTypes.Fragment)
@@ -39,9 +38,11 @@ export default class Material {
       attributes[attr].location = location
     }
 
-    for (let uniform of uniformNames) {
-      const location = this.gl.getUniformLocation(this.program, uniform)
-      this.uniformLocations[uniform] = location
+    const uniformCount = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
+    for (let i = 0; i < uniformCount; i++) {
+      const { name: uniformName, type, size } = gl.getActiveUniform(this.program, i)
+      const location = this.gl.getUniformLocation(this.program, uniformName)
+      this.uniformLocations[uniformName] = location
     }
   }
 
@@ -61,7 +62,7 @@ export default class Material {
     }
   }
 
-  setAttribute = (attrName: string, attrType: GLenum, ...rest: any[]) => {
+  setUniform = (attrName: string, attrType: GLenum, ...rest: any[]) => {
     const uniformLocation = this.uniformLocations[attrName]
     ;(this.gl as any)[UniformTypeToLocation(this.gl)[attrType]](uniformLocation, ...rest)
   }

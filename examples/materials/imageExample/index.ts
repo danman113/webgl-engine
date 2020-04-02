@@ -11,15 +11,11 @@ const texture = new Texture(image)
 const example = new MaterialExample(
   'Texture Example',
   gl => {
-    const mat = new Material(
-      gl,
-      VertexSource,
-      FragmentSource,
-      {
-        aPosition: new VertexAttribute(
-          gl,
-          // prettier-ignore
-          new Float32Array([
+    const mat = new Material(gl, VertexSource, FragmentSource, {
+      aPosition: new VertexAttribute(
+        gl,
+        // prettier-ignore
+        new Float32Array([
             0, 0,
             1, 0,
             0, 1, // Left Triangle
@@ -27,20 +23,14 @@ const example = new MaterialExample(
             1, 0,
             1, 1, // Right Triangles
           ]),
-          {
-            dimension: 2
-          }
-        ),
-        aTextcoord: new VertexAttribute(
-          gl,
-          new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]),
-          {
-            dimension: 2
-          }
-        )
-      },
-      ['uColor']
-    )
+        {
+          dimension: 2
+        }
+      ),
+      aTextcoord: new VertexAttribute(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), {
+        dimension: 2
+      })
+    })
     texture.bindTexture(gl)
     return mat
   },
@@ -48,7 +38,7 @@ const example = new MaterialExample(
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     material.useProgram()
-    material.setAttribute(
+    material.setUniform(
       'uColor',
       gl.FLOAT_VEC3,
       engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
