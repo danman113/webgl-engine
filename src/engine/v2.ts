@@ -24,17 +24,17 @@ function sety(val: number) {
 const xProperty = { get: getx, set: setx }
 const yProperty = { get: gety, set: sety }
 
-export const v2 = (x = 0, y = 0): v2 => {
-  const out = [x, y]
-  Object.defineProperty(out, 'x', xProperty)
-  Object.defineProperty(out, 'y', yProperty)
-  return out
+if (!(<any>Array.prototype).x) {
+  Object.defineProperty(Array.prototype, 'x', xProperty)
+  Object.defineProperty(Array.prototype, 'y', yProperty)
 }
+
+export const v2 = (x = 0, y = 0): v2 => [x, y]
 export const ZERO = v2()
-// Eucliean distance between two points
+// Euclidean distance between two points
 export const distance = (pt1: v2, pt2: v2): number =>
   Math.sqrt((pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y))
-
+// Faster than distance
 export const distanceSquared = (pt1: v2, pt2: v2): number =>
   (pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y)
 
@@ -57,10 +57,11 @@ export const numPi: number = 180 / Math.PI
 export const degToRad = (deg: number): number => deg * piNum
 export const radToDeg = (rad: number): number => rad * numPi
 
+export const dot = (a: v2, b: v2): number => a.x * b.x + a.y * b.y
+
 export const sum = (a: v2, b: v2): v2 => v2(a.x + b.x, a.y + b.y)
 export const sub = (a: v2, b: v2): v2 => v2(a.x - b.x, a.y - b.y)
 
-export const dot = (a: v2, b: v2): number => a.x * b.x + a.y * b.y
 export const unit = (a: v2): v2 => {
   const dist = distance(ZERO, a)
   return v2(a.x / dist, a.y / dist)

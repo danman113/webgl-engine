@@ -9,6 +9,7 @@ export interface EngineSettings {
 export default class Engine {
   public gl: WebGLRenderingContext
   public mouse: v2 = v2()
+  public keys: Set<number> = new Set()
   public touches: v2[] = []
 
   public RAF: number
@@ -68,6 +69,20 @@ export default class Engine {
       }
     })
 
+    element.addEventListener('keydown', e => {
+      e.preventDefault()
+      const { keyCode } = e
+      this.keys.add(keyCode)
+      this.onKeyDown(this.gl, this, keyCode)
+    })
+
+    element.addEventListener('keyup', e => {
+      e.preventDefault()
+      const { keyCode } = e
+      this.keys.delete(keyCode)
+      this.onKeyUp(this.gl, this, keyCode)
+    })
+
     element.addEventListener('contextmenu', e => e.preventDefault())
     element.addEventListener('dragenter', e => e.preventDefault())
   }
@@ -91,13 +106,15 @@ export default class Engine {
   init = (gl: WebGLRenderingContext, e: Engine) => {}
   onResize = (gl: WebGLRenderingContext, e: Engine) => {}
   onClick = (gl: WebGLRenderingContext, e: Engine) => {}
+  onKeyDown = (gl: WebGLRenderingContext, e: Engine, keyCode: number) => {}
+  onKeyUp = (gl: WebGLRenderingContext, e: Engine, keyCode: number) => {}
 
   private setCanvasDimensions = (maxWidth: number, maxHeight: number) => {
     const element = this.element
     element.width = maxWidth
     element.height = maxHeight
-    element.style.width = `${maxWidth}`
-    element.style.height = `${maxHeight}`
+    element.style.width = String(maxWidth)
+    element.style.height = String(maxHeight)
   }
 
   private setCanvasSize = (settings: EngineSettings) => {
