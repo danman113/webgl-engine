@@ -17,9 +17,7 @@ window.onload = () => {
   engine.init = gl => {
     c = makeOffscreenCanvas(engine.settings.width, engine.settings.height)
     texture = new CanvasTexture(c)
-    texture.bindTexture(gl)
-    // global.c = c
-    // global.engine = engine
+    texture.setTexture(gl)
 
     let textureMaterial = new Material(gl, vertexShader, fragmentShader, {
       aPosition: new VertexAttribute(
@@ -67,13 +65,14 @@ window.onload = () => {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     for (let entity of entities) {
       entity.useProgram()
-      entity.setUniform(
-        'uColor',
-        gl.FLOAT_VEC3,
-        engine.mouse[0] / engine.settings.width,
-        0.42,
-        engine.mouse[1] / engine.settings.height
-      )
+      // @TODO: Get this to work with multiple textures
+      if (entity.uniformLocations['uColor'])
+        entity.setUniform(
+          'uColor',
+          engine.mouse[0] / engine.settings.width,
+          0.42,
+          engine.mouse[1] / engine.settings.height
+        )
       entity.drawUsingAttribute('aPosition')
     }
   }

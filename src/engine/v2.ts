@@ -62,6 +62,8 @@ export const dot = (a: v2, b: v2): number => a.x * b.x + a.y * b.y
 
 export const sum = (a: v2, b: v2): v2 => v2(a.x + b.x, a.y + b.y)
 export const sub = (a: v2, b: v2): v2 => v2(a.x - b.x, a.y - b.y)
+export const mult = (a: v2, b: v2): v2 => v2(a.x * b.x, a.y * b.y)
+export const divide = (a: v2, b: v2): v2 => v2(a.x / b.x, a.y / b.y)
 
 export const unit = (a: v2): v2 => {
   const dist = distance(ZERO, a)

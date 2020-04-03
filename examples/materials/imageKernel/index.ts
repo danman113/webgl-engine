@@ -9,7 +9,7 @@ import image from './img.jpg'
 const texture = new Texture(image)
 
 const example = new MaterialExample(
-  'Texture Example',
+  'Image Kernel Example',
   gl => {
     const mat = new Material(gl, VertexSource, FragmentSource, {
       aPosition: new VertexAttribute(
@@ -27,9 +27,21 @@ const example = new MaterialExample(
           dimension: 2
         }
       ),
-      aTextcoord: new VertexAttribute(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), {
-        dimension: 2
-      })
+      aTextcoord: new VertexAttribute(
+        gl,
+        // prettier-ignore
+        new Float32Array([
+          0, 0,
+          1, 0,
+          0, 1,
+          0, 1,
+          1, 0,
+          1, 1
+        ]),
+        {
+          dimension: 2
+        }
+      )
     })
     texture.setTexture(gl)
     return mat
@@ -40,12 +52,12 @@ const example = new MaterialExample(
     material.useProgram()
     texture.bindTexture(gl)
     material.setUniform('uImage', texture.textureUnit)
-    material.setUniform(
-      'uColor',
-      engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
-      0.42,
-      engine.mouse[1] / engine.settings.height // Percentage of mouse to last y coord
-    )
+    // material.setUniform(
+    //   'uColor',
+    //   engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
+    //   0.42,
+    //   engine.mouse[1] / engine.settings.height // Percentage of mouse to last y coord
+    // )
     material.drawUsingAttribute('aPosition')
   }
 )

@@ -7,11 +7,15 @@ export enum ShaderTypes {
 const UniformTypeToLocation: (gl: WebGLRenderingContext) => { [type: number]: string } = gl => ({
   [gl.FLOAT]: 'uniform1f',
   [gl.FLOAT_VEC2]: 'uniform2f',
-  [gl.FLOAT_VEC3]: 'uniform3f'
+  [gl.FLOAT_VEC3]: 'uniform3f',
+  [gl.SAMPLER_2D]: 'uniform1i'
 })
 
-interface UniformLocationMap {
-  [name: string]: WebGLUniformLocation
+class UniformAttribute {
+  constructor(public location: WebGLUniformLocation, public type: number, public size: number) {}
+}
+interface UniformMap {
+  [name: string]: UniformAttribute
 }
 
 interface AttributeMap {
@@ -22,7 +26,7 @@ export default class Material {
   public vertexShader: WebGLShader
   public fragmentShader: WebGLShader
   public program: WebGLProgram
-  public uniformLocations: UniformLocationMap = {}
+  public uniformLocations: UniformMap = {}
 
   constructor(
     public gl: WebGLRenderingContext,
@@ -42,7 +46,7 @@ export default class Material {
     for (let i = 0; i < uniformCount; i++) {
       const { name: uniformName, type, size } = gl.getActiveUniform(this.program, i)
       const location = this.gl.getUniformLocation(this.program, uniformName)
-      this.uniformLocations[uniformName] = location
+      this.uniformLocations[uniformName] = new UniformAttribute(location, type, size)
     }
   }
 
@@ -62,9 +66,11 @@ export default class Material {
     }
   }
 
-  setUniform = (attrName: string, attrType: GLenum, ...rest: any[]) => {
-    const uniformLocation = this.uniformLocations[attrName]
-    ;(this.gl as any)[UniformTypeToLocation(this.gl)[attrType]](uniformLocation, ...rest)
+  setUniform = (attrName: string, ...rest: any[]) => {
+    if (!this.uniformLocations[attrName])
+      throw new Error(`Uniform '${attrName}' not referenced in source program`)
+    const { location, type } = this.uniformLocations[attrName]
+    ;(<any>this.gl)[UniformTypeToLocation(this.gl)[type]](location, ...rest)
   }
 
   useProgram = () => this.gl.useProgram(this.program)

@@ -50,7 +50,6 @@ window.onload = () => {
       entity.useProgram()
       entity.setUniform(
         'uColor',
-        gl.FLOAT_VEC3,
         engine.mouse[0] / engine.settings.width,
         0.42,
         engine.mouse[1] / engine.settings.height

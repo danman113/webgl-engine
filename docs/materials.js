@@ -157,15 +157,118 @@ var example = new materialExample_1.default('Texture Example', function (gl) {
             dimension: 2
         })
     });
-    texture.bindTexture(gl);
+    texture.setTexture(gl);
     return mat;
 }, function (gl, material, engine) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     material.useProgram();
-    material.setUniform('uColor', gl.FLOAT_VEC3, engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
+    texture.bindTexture(gl);
+    material.setUniform('uImage', texture.textureUnit);
+    material.setUniform('uColor', engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
     0.42, engine.mouse[1] / engine.settings.height // Percentage of mouse to last y coord
     );
+    material.drawUsingAttribute('aPosition');
+});
+exports.default = example;
+
+
+/***/ }),
+
+/***/ "./examples/materials/imageKernel/image.frag":
+/*!***************************************************!*\
+  !*** ./examples/materials/imageKernel/image.frag ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nvarying vec2 vTextcoord;\nuniform sampler2D uImage;\n\nvoid main () {\n  vec4 tex = texture2D(uImage, vTextcoord);\n  gl_FragColor = tex;\n}"
+
+/***/ }),
+
+/***/ "./examples/materials/imageKernel/image.vert":
+/*!***************************************************!*\
+  !*** ./examples/materials/imageKernel/image.vert ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nattribute vec2 aPosition;\nattribute vec2 aTextcoord;\nvarying vec2 vTextcoord;\n\nvoid main () {\n  vTextcoord = aTextcoord;\n  vec2 pos = (aPosition.xy * 2.0 - 1.0) * vec2(1, -1);\n  gl_Position = vec4(pos, 0, 1);\n}\n"
+
+/***/ }),
+
+/***/ "./examples/materials/imageKernel/img.jpg":
+/*!************************************************!*\
+  !*** ./examples/materials/imageKernel/img.jpg ***!
+  \************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "521c6b8f42ddcd0cd02ecc82fd6f1a0b.jpg");
+
+/***/ }),
+
+/***/ "./examples/materials/imageKernel/index.ts":
+/*!*************************************************!*\
+  !*** ./examples/materials/imageKernel/index.ts ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var material_1 = __webpack_require__(/*! ../../../src/engine/material */ "./src/engine/material.ts");
+var vertexAttribute_1 = __webpack_require__(/*! ../../../src/engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
+var texture_1 = __webpack_require__(/*! ../../../src/engine/texture */ "./src/engine/texture.ts");
+var materialExample_1 = __webpack_require__(/*! ../materialExample */ "./examples/materials/materialExample.ts");
+var FragmentSource = __webpack_require__(/*! ./image.frag */ "./examples/materials/imageKernel/image.frag");
+var VertexSource = __webpack_require__(/*! ./image.vert */ "./examples/materials/imageKernel/image.vert");
+var img_jpg_1 = __webpack_require__(/*! ./img.jpg */ "./examples/materials/imageKernel/img.jpg");
+var texture = new texture_1.ImageTexture(img_jpg_1.default);
+var example = new materialExample_1.default('Image Kernel Example', function (gl) {
+    var mat = new material_1.default(gl, VertexSource, FragmentSource, {
+        aPosition: new vertexAttribute_1.default(gl, 
+        // prettier-ignore
+        new Float32Array([
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1,
+        ]), {
+            dimension: 2
+        }),
+        aTextcoord: new vertexAttribute_1.default(gl, 
+        // prettier-ignore
+        new Float32Array([
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1
+        ]), {
+            dimension: 2
+        })
+    });
+    texture.setTexture(gl);
+    return mat;
+}, function (gl, material, engine) {
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    material.useProgram();
+    texture.bindTexture(gl);
+    material.setUniform('uImage', texture.textureUnit);
+    // material.setUniform(
+    //   'uColor',
+    //   engine.mouse[0] / engine.settings.width, // Percentage of mouse to last x coord
+    //   0.42,
+    //   engine.mouse[1] / engine.settings.height // Percentage of mouse to last y coord
+    // )
     material.drawUsingAttribute('aPosition');
 });
 exports.default = example;
@@ -186,7 +289,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var engine_1 = __webpack_require__(/*! ./../../src/engine */ "./src/engine/index.ts");
 var mouseGradientExample_1 = __webpack_require__(/*! ./mouseGradientExample */ "./examples/materials/mouseGradientExample/index.ts");
 var imageExample_1 = __webpack_require__(/*! ./imageExample */ "./examples/materials/imageExample/index.ts");
-var entities = [mouseGradientExample_1.default, imageExample_1.default];
+var imageKernel_1 = __webpack_require__(/*! ./imageKernel */ "./examples/materials/imageKernel/index.ts");
+var entities = [mouseGradientExample_1.default, imageExample_1.default, imageKernel_1.default];
 var selectedEntity = entities[0];
 var list = document.createElement('ul');
 var listElements = entities.map(function (entity, i) {
@@ -273,7 +377,7 @@ var example = new materialExample_1.default('Mouse Gradient', function (gl) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     material.useProgram();
-    material.setUniform('uColor', gl.FLOAT_VEC3, engine.mouse.x / engine.settings.width, 0.42, engine.mouse.y / engine.settings.height);
+    material.setUniform('uColor', engine.mouse.x / engine.settings.width, 0.42, engine.mouse.y / engine.settings.height);
     material.drawUsingAttribute('aPosition');
 });
 exports.default = example;
@@ -358,6 +462,7 @@ var Engine = /** @class */ (function () {
         this.element = element;
         this.settings = settings;
         this.mouse = v2_1.v2();
+        this.mouseButtons = Array();
         this.keys = new Set();
         this.touches = [];
         this.updateTouches = function (e) {
@@ -376,6 +481,8 @@ var Engine = /** @class */ (function () {
         this.init = function (gl, e) { };
         this.onResize = function (gl, e) { };
         this.onClick = function (gl, e) { };
+        this.onMouseDown = function (gl, e) { };
+        this.onMouseUp = function (gl, e) { };
         this.onKeyDown = function (gl, e, keyCode) { };
         this.onKeyUp = function (gl, e, keyCode) { };
         this.setCanvasDimensions = function (maxWidth, maxHeight) {
@@ -408,6 +515,22 @@ var Engine = /** @class */ (function () {
                 _this.mouse.y = e.offsetY;
             }
         });
+        element.addEventListener('mousedown', function (e) {
+            _this.mouseButtons[e.button] = true;
+            _this.onMouseDown(gl, _this);
+        });
+        element.addEventListener('mouseup', function (e) {
+            _this.mouseButtons[e.button] = false;
+            _this.onMouseUp(gl, _this);
+        });
+        element.addEventListener('mouseleave', function (e) {
+            _this.mouseButtons = Array();
+            // Handles the event where the mouse leaves the page
+            _this.onMouseUp(gl, _this);
+        });
+        // element.addEventListener('mouseenter', e => {
+        //   // Isn't needed as mouseup takes care of this
+        // })
         element.addEventListener('click', function (e) {
             _this.onClick(gl, _this);
         });
@@ -420,6 +543,7 @@ var Engine = /** @class */ (function () {
                     _this.mouse.y = touch.pageY;
                 }
             }
+            _this.onMouseDown(gl, _this);
         });
         element.addEventListener('touchend', function (e) {
             _this.updateTouches(e);
@@ -430,6 +554,7 @@ var Engine = /** @class */ (function () {
                     _this.mouse.y = touch.pageY;
                 }
             }
+            _this.onMouseUp(gl, _this);
             _this.onClick(gl, _this);
         });
         element.addEventListener('touchmove', function (e) {
@@ -492,8 +617,17 @@ var UniformTypeToLocation = function (gl) {
         _a[gl.FLOAT] = 'uniform1f',
         _a[gl.FLOAT_VEC2] = 'uniform2f',
         _a[gl.FLOAT_VEC3] = 'uniform3f',
+        _a[gl.SAMPLER_2D] = 'uniform1i',
         _a);
 };
+var UniformAttribute = /** @class */ (function () {
+    function UniformAttribute(location, type, size) {
+        this.location = location;
+        this.type = type;
+        this.size = size;
+    }
+    return UniformAttribute;
+}());
 var Material = /** @class */ (function () {
     function Material(gl, vertexSource, fragmentSource, attributes) {
         var _this = this;
@@ -510,14 +644,16 @@ var Material = /** @class */ (function () {
                 _this.gl.vertexAttribPointer(attr.location, attr.vertexAttributeMetadata.dimension, attr.vertexAttributeMetadata.type, attr.vertexAttributeMetadata.normalize, attr.vertexAttributeMetadata.stride, attr.vertexAttributeMetadata.offset);
             }
         };
-        this.setUniform = function (attrName, attrType) {
+        this.setUniform = function (attrName) {
             var _a;
             var rest = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                rest[_i - 2] = arguments[_i];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                rest[_i - 1] = arguments[_i];
             }
-            var uniformLocation = _this.uniformLocations[attrName];
-            (_a = _this.gl)[UniformTypeToLocation(_this.gl)[attrType]].apply(_a, __spreadArrays([uniformLocation], rest));
+            if (!_this.uniformLocations[attrName])
+                throw new Error("Uniform '" + attrName + "' not referenced in source program");
+            var _b = _this.uniformLocations[attrName], location = _b.location, type = _b.type;
+            (_a = _this.gl)[UniformTypeToLocation(_this.gl)[type]].apply(_a, __spreadArrays([location], rest));
         };
         this.useProgram = function () { return _this.gl.useProgram(_this.program); };
         this.drawUsingAttribute = function (attrName, drawType, offset) {
@@ -563,7 +699,7 @@ var Material = /** @class */ (function () {
         for (var i = 0; i < uniformCount; i++) {
             var _a = gl.getActiveUniform(this.program, i), uniformName = _a.name, type = _a.type, size = _a.size;
             var location_2 = this.gl.getUniformLocation(this.program, uniformName);
-            this.uniformLocations[uniformName] = location_2;
+            this.uniformLocations[uniformName] = new UniformAttribute(location_2, type, size);
         }
     }
     return Material;
@@ -597,23 +733,42 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var textureSource = 0;
+var MAX_TEXTURES = -Infinity;
 var Texture = /** @class */ (function () {
     function Texture() {
         this.textureSource = textureSource++;
         this.loaded = true;
     }
-    Texture.prototype.bindTexture = function (gl) {
+    Object.defineProperty(Texture.prototype, "textureUnit", {
+        get: function () {
+            return this.textureSource % MAX_TEXTURES;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    // Allocates a buffer for the texture and sets it's texture unit
+    Texture.prototype.setTexture = function (gl) {
+        if (MAX_TEXTURES < 0)
+            MAX_TEXTURES = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
         if (!this.loaded)
             throw new Error('Attempted to bind image to texture before it loads. Make sure the image is loaded by the time you call bindTexture');
+        // Allocates a new texture* object on the GPU
         var texture = gl.createTexture();
         this._texture = texture;
-        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // Sets the current texture unit to point to this texture
+        this.bindTexture(gl);
+        // Sets some texture parameters to use linear scaling and wrapping. May want to make this configurable
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, this.textureSource, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
+        // Copies the buffer inside this.texture to the texture unit on the GPU
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
         return texture;
+    };
+    Texture.prototype.bindTexture = function (gl) {
+        gl.activeTexture(gl.TEXTURE0 + this.textureUnit);
+        gl.bindTexture(gl.TEXTURE_2D, this._texture);
     };
     Texture.prototype.delete = function (gl) {
         gl.deleteTexture(this._texture);
@@ -627,10 +782,13 @@ var CanvasTexture = /** @class */ (function (_super) {
     function CanvasTexture(context) {
         var _this = _super.call(this) || this;
         _this.texture = context.canvas;
+        _this.height = context.canvas.height;
+        _this.width = context.canvas.width;
         return _this;
     }
     CanvasTexture.prototype.rebindTexture = function (gl) {
-        gl.texImage2D(gl.TEXTURE_2D, this.textureSource, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
+        this.bindTexture(gl);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.texture);
     };
     return CanvasTexture;
 }(Texture));
@@ -643,8 +801,12 @@ var ImageTexture = /** @class */ (function (_super) {
         _this.loaded = false;
         var image = new Image();
         image.src = source;
+        _this.width = image.width;
+        _this.height = image.height;
         image.onload = function () {
             _this.loaded = true;
+            _this.width = image.width;
+            _this.height = image.height;
         };
         _this.texture = image;
         return _this;
@@ -720,6 +882,8 @@ exports.radToDeg = function (rad) { return rad * exports.numPi; };
 exports.dot = function (a, b) { return a.x * b.x + a.y * b.y; };
 exports.sum = function (a, b) { return exports.v2(a.x + b.x, a.y + b.y); };
 exports.sub = function (a, b) { return exports.v2(a.x - b.x, a.y - b.y); };
+exports.mult = function (a, b) { return exports.v2(a.x * b.x, a.y * b.y); };
+exports.divide = function (a, b) { return exports.v2(a.x / b.x, a.y / b.y); };
 exports.unit = function (a) {
     var dist = exports.distance(exports.ZERO, a);
     return exports.v2(a.x / dist, a.y / dist);

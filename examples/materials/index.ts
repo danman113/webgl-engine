@@ -2,8 +2,9 @@ import Engine from './../../src/engine'
 import MaterialExample from './materialExample'
 import MouseGradientExample from './mouseGradientExample'
 import ImageExample from './imageExample'
+import ImageKernel from './imageKernel'
 
-let entities: MaterialExample[] = [MouseGradientExample, ImageExample]
+let entities: MaterialExample[] = [MouseGradientExample, ImageExample, ImageKernel]
 let selectedEntity = entities[0]
 
 const list = document.createElement('ul')

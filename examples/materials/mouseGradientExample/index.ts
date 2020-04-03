@@ -22,7 +22,6 @@ const example = new MaterialExample(
     material.useProgram()
     material.setUniform(
       'uColor',
-      gl.FLOAT_VEC3,
       engine.mouse.x / engine.settings.width,
       0.42,
       engine.mouse.y / engine.settings.height

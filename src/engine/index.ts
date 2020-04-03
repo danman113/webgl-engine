@@ -9,6 +9,7 @@ export interface EngineSettings {
 export default class Engine {
   public gl: WebGLRenderingContext
   public mouse: v2 = v2()
+  public mouseButtons: boolean[] = Array()
   public keys: Set<number> = new Set()
   public touches: v2[] = []
 
@@ -31,6 +32,26 @@ export default class Engine {
       }
     })
 
+    element.addEventListener('mousedown', e => {
+      this.mouseButtons[e.button] = true
+      this.onMouseDown(gl, this)
+    })
+
+    element.addEventListener('mouseup', e => {
+      this.mouseButtons[e.button] = false
+      this.onMouseUp(gl, this)
+    })
+
+    element.addEventListener('mouseleave', e => {
+      this.mouseButtons = Array()
+      // Handles the event where the mouse leaves the page
+      this.onMouseUp(gl, this)
+    })
+
+    // element.addEventListener('mouseenter', e => {
+    //   // Isn't needed as mouseup takes care of this
+    // })
+
     element.addEventListener('click', e => {
       this.onClick(gl, this)
     })
@@ -44,6 +65,7 @@ export default class Engine {
           this.mouse.y = touch.pageY
         }
       }
+      this.onMouseDown(gl, this)
     })
 
     element.addEventListener('touchend', e => {
@@ -55,6 +77,7 @@ export default class Engine {
           this.mouse.y = touch.pageY
         }
       }
+      this.onMouseUp(gl, this)
       this.onClick(gl, this)
     })
 
@@ -106,6 +129,8 @@ export default class Engine {
   init = (gl: WebGLRenderingContext, e: Engine) => {}
   onResize = (gl: WebGLRenderingContext, e: Engine) => {}
   onClick = (gl: WebGLRenderingContext, e: Engine) => {}
+  onMouseDown = (gl: WebGLRenderingContext, e: Engine) => {}
+  onMouseUp = (gl: WebGLRenderingContext, e: Engine) => {}
   onKeyDown = (gl: WebGLRenderingContext, e: Engine, keyCode: number) => {}
   onKeyUp = (gl: WebGLRenderingContext, e: Engine, keyCode: number) => {}
 

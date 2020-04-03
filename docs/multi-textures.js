@@ -81,143 +81,83 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./examples/ui-layer/index.ts");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./examples/multi-textures/index.ts");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./examples/materials/materialExample.ts":
-/*!***********************************************!*\
-  !*** ./examples/materials/materialExample.ts ***!
-  \***********************************************/
+/***/ "./examples/multi-textures/index.ts":
+/*!******************************************!*\
+  !*** ./examples/multi-textures/index.ts ***!
+  \******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var MaterialExample = /** @class */ (function () {
-    function MaterialExample(name, setup, draw) {
-        this.name = name;
-        this.setup = setup;
-        this.draw = draw;
+var v2_1 = __webpack_require__(/*! ./../../src/engine/v2 */ "./src/engine/v2.ts");
+var engine_1 = __webpack_require__(/*! ../../src/engine */ "./src/engine/index.ts");
+var material_1 = __webpack_require__(/*! ../../src/engine/material */ "./src/engine/material.ts");
+var vertexAttribute_1 = __webpack_require__(/*! ../../src/engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
+var texture_1 = __webpack_require__(/*! ../../src/engine/texture */ "./src/engine/texture.ts");
+var canvas2d_1 = __webpack_require__(/*! ../../src/engine/canvas2d */ "./src/engine/canvas2d.ts");
+var fragmentShader = __webpack_require__(/*! ./texture.frag */ "./examples/multi-textures/texture.frag");
+var vertexShader = __webpack_require__(/*! ./texture.vert */ "./examples/multi-textures/texture.vert");
+var rectangle_1 = __webpack_require__(/*! ../../src/engine/rectangle */ "./src/engine/rectangle.ts");
+var w = 200;
+var h = 100;
+var alphabet = '';
+for (var i = 0; i < 26; i++) {
+    alphabet += String.fromCharCode(65 + i);
+}
+var c = canvas2d_1.makeOffscreenCanvas(w, h);
+var makeRandomTextureEntity = function (i) {
+    var randomString = Array(Math.floor(Math.random() * 20 + 5))
+        .fill(0)
+        .map(function (_) { return alphabet[Math.floor(Math.random() * alphabet.length)]; })
+        .join('');
+    var text = randomString + ": " + i;
+    c.font = '14px sans-serif';
+    var width = c.measureText(text).width;
+    c.canvas.width = width;
+    // We need to do this twice because resetting the canvas width resets fillStyle?
+    c.clearRect(0, 0, Math.ceil(c.canvas.width), Math.ceil(c.canvas.height));
+    c.globalAlpha = 0.6;
+    c.fillStyle = "rgba(0, " + ((Math.random() * 156 + 100) | 0) + ", " + ((Math.random() * 156 + 100) |
+        0) + ", " + 43 + ")";
+    c.fillRect(0, 0, Math.ceil(c.canvas.width), Math.ceil(c.canvas.height));
+    c.globalAlpha = 1;
+    c.fillStyle = 'red';
+    c.font = '14px sans-serif';
+    c.fillText(text, 0, 14);
+    var texture = new texture_1.CanvasTexture(c);
+    var textureEntity = new TextureEntity(texture, v2_1.v2(Math.random(), Math.random()), text);
+    return textureEntity;
+};
+var TextureEntity = /** @class */ (function () {
+    function TextureEntity(texture, position, id) {
+        if (id === void 0) { id = 'hi'; }
+        this.texture = texture;
+        this.position = position;
+        this.id = id;
     }
-    MaterialExample.prototype.onload = function (gl) {
-        this.material = this.setup(gl);
-    };
-    return MaterialExample;
+    return TextureEntity;
 }());
-exports.default = MaterialExample;
-
-
-/***/ }),
-
-/***/ "./examples/materials/mouseGradientExample/index.ts":
-/*!**********************************************************!*\
-  !*** ./examples/materials/mouseGradientExample/index.ts ***!
-  \**********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var material_1 = __webpack_require__(/*! ../../../src/engine/material */ "./src/engine/material.ts");
-var vertexAttribute_1 = __webpack_require__(/*! ../../../src/engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
-var materialExample_1 = __webpack_require__(/*! ../materialExample */ "./examples/materials/materialExample.ts");
-var FragmentSource = __webpack_require__(/*! ./mouseGradient.frag */ "./examples/materials/mouseGradientExample/mouseGradient.frag");
-var VertexSource = __webpack_require__(/*! ./mouseGradient.vert */ "./examples/materials/mouseGradientExample/mouseGradient.vert");
-var example = new materialExample_1.default('Mouse Gradient', function (gl) {
-    return new material_1.default(gl, VertexSource, FragmentSource, {
-        aPosition: new vertexAttribute_1.default(gl, new Float32Array([0, 0, 1, 1, 0, 0.5, 0, 1, 0.5, 0, 1, 0.5, 1, 0, 0.5, 1, 1, 0]), {
-            dimension: 3
-        })
-    });
-}, function (gl, material, engine) {
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    material.useProgram();
-    material.setUniform('uColor', engine.mouse.x / engine.settings.width, 0.42, engine.mouse.y / engine.settings.height);
-    material.drawUsingAttribute('aPosition');
-});
-exports.default = example;
-
-
-/***/ }),
-
-/***/ "./examples/materials/mouseGradientExample/mouseGradient.frag":
-/*!********************************************************************!*\
-  !*** ./examples/materials/mouseGradientExample/mouseGradient.frag ***!
-  \********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "precision mediump float;\nvarying float vColor;\nuniform vec3 uColor;\nvoid main () {\n  gl_FragColor = vec4(uColor * vColor, 1);\n}"
-
-/***/ }),
-
-/***/ "./examples/materials/mouseGradientExample/mouseGradient.vert":
-/*!********************************************************************!*\
-  !*** ./examples/materials/mouseGradientExample/mouseGradient.vert ***!
-  \********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "precision mediump float;\nattribute vec3 aPosition;\nvarying float vColor;\nvoid main () {\n  vColor = aPosition.z;\n  vec2 pos = (aPosition.xy * 2.0 - 1.0) * vec2(1, -1);\n  gl_Position = vec4(pos, 0, 1);\n}"
-
-/***/ }),
-
-/***/ "./examples/ui-layer/image.frag":
-/*!**************************************!*\
-  !*** ./examples/ui-layer/image.frag ***!
-  \**************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "precision mediump float;\nvarying vec2 vTextcoord;\nuniform sampler2D uImage;\n\nvoid main () {\n  gl_FragColor = texture2D(uImage, vTextcoord);\n}\n"
-
-/***/ }),
-
-/***/ "./examples/ui-layer/image.vert":
-/*!**************************************!*\
-  !*** ./examples/ui-layer/image.vert ***!
-  \**************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = "precision mediump float;\nattribute vec2 aPosition;\nattribute vec2 aTextcoord;\nvarying vec2 vTextcoord;\n\nvoid main () {\n  vTextcoord = aTextcoord;\n  // Moving from a -1 => 1 to 0 => 1\n  vec2 pos = (aPosition * 2.0 - 1.0) * vec2(1, -1);\n  gl_Position = vec4(pos, 0, 1);\n}"
-
-/***/ }),
-
-/***/ "./examples/ui-layer/index.ts":
-/*!************************************!*\
-  !*** ./examples/ui-layer/index.ts ***!
-  \************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var engine_1 = __webpack_require__(/*! ./../../src/engine */ "./src/engine/index.ts");
-var material_1 = __webpack_require__(/*! ./../../src/engine/material */ "./src/engine/material.ts");
-var vertexAttribute_1 = __webpack_require__(/*! ./../../src/engine/vertexAttribute */ "./src/engine/vertexAttribute.ts");
-var texture_1 = __webpack_require__(/*! ./../../src/engine/texture */ "./src/engine/texture.ts");
-var canvas2d_1 = __webpack_require__(/*! ./../../src/engine/canvas2d */ "./src/engine/canvas2d.ts");
-var mouseGradientExample_1 = __webpack_require__(/*! ../materials/mouseGradientExample */ "./examples/materials/mouseGradientExample/index.ts");
-var fragmentShader = __webpack_require__(/*! ./image.frag */ "./examples/ui-layer/image.frag");
-var vertexShader = __webpack_require__(/*! ./image.vert */ "./examples/ui-layer/image.vert");
-var entities = [];
+var textureEntities = [];
+var textureMaterial;
 window.onload = function () {
     var engine = new engine_1.default(document.getElementById('webgl'), {
         fullscreen: true
     });
-    var c, texture;
+    window.textureEntities = textureEntities;
     engine.init = function (gl) {
-        c = canvas2d_1.makeOffscreenCanvas(engine.settings.width, engine.settings.height);
-        texture = new texture_1.CanvasTexture(c);
-        texture.setTexture(gl);
-        var textureMaterial = new material_1.default(gl, vertexShader, fragmentShader, {
+        for (var i = 0; i < 20; i++) {
+            var textureEntity = makeRandomTextureEntity(i);
+            textureEntity.texture.setTexture(gl);
+            textureEntities.push(textureEntity);
+        }
+        textureMaterial = new material_1.default(gl, vertexShader, fragmentShader, {
             aPosition: new vertexAttribute_1.default(gl, 
             // prettier-ignore
             new Float32Array([
@@ -234,42 +174,79 @@ window.onload = function () {
                 dimension: 2
             })
         });
-        mouseGradientExample_1.default.onload(gl);
-        entities.push(mouseGradientExample_1.default.material);
-        entities.push(textureMaterial);
     };
-    var x = 0;
-    var resolutionScale = 1;
-    engine.draw = function (gl, engine) {
-        {
-            c.canvas.width = engine.settings.width * resolutionScale;
-            c.canvas.height = engine.settings.height * resolutionScale;
-            // c.clearRect(0, 0, engine.settings.width * resolutionScale, engine.settings.height * resolutionScale)
-            // c.fillStyle = 'black'
-            // c.fillRect(0, 0, engine.settings.width * resolutionScale, engine.settings.height * resolutionScale)
-            c.fillStyle = 'red';
-            x += 0.25;
-            c.fillRect(engine.mouse.x * resolutionScale, engine.mouse.y * resolutionScale, 40, 90);
-            c.font = '32px sans-serif';
-            c.fillText('Hello Canvas', 100 + x, 32);
-            texture.rebindTexture(gl);
+    var selectedTexture = -1;
+    var anchorPoint = v2_1.v2(0, 0);
+    engine.onMouseDown = function (_, e) {
+        var sizeVector = v2_1.v2(engine.settings.width, engine.settings.height);
+        for (var i = textureEntities.length - 1; i >= 0; i--) {
+            var textureEntity = textureEntities[i];
+            var pos = v2_1.mult(textureEntity.position, sizeVector);
+            var box = new rectangle_1.default(pos, v2_1.sum(pos, v2_1.v2(textureEntity.texture.width, textureEntity.texture.height)));
+            var mouse = new rectangle_1.default(engine.mouse, v2_1.sum(engine.mouse, v2_1.v2(-2, -2)));
+            if (box.intersectsBox(mouse)) {
+                selectedTexture = i;
+                anchorPoint = engine.mouse.slice();
+                break;
+            }
         }
+    };
+    engine.onMouseUp = function (_, e) {
+        if (selectedTexture > -1) {
+            var sizeVector = v2_1.v2(engine.settings.width, engine.settings.height);
+            var offset = v2_1.divide(v2_1.sub(engine.mouse, anchorPoint), sizeVector); // normalize from (0, 0) -> (width, height) => (0, 0) -> (1, 1)
+            textureEntities[selectedTexture].position = v2_1.sum(textureEntities[selectedTexture].position, offset);
+            selectedTexture = -1;
+        }
+    };
+    engine.draw = function (gl, engine) {
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        for (var _i = 0, entities_1 = entities; _i < entities_1.length; _i++) {
-            var entity = entities_1[_i];
-            entity.useProgram();
-            // @TODO: Get this to work with multiple textures
-            if (entity.uniformLocations['uColor'])
-                entity.setUniform('uColor', engine.mouse[0] / engine.settings.width, 0.42, engine.mouse[1] / engine.settings.height);
-            entity.drawUsingAttribute('aPosition');
+        var sizeVector = v2_1.v2(engine.settings.width, engine.settings.height);
+        var offset = v2_1.divide(v2_1.sub(engine.mouse, anchorPoint), sizeVector); // normalize from (0, 0) -> (width, height) => (0, 0) -> (1, 1)
+        for (var i = 0; i < textureEntities.length; i++) {
+            var textureEntity = textureEntities[i];
+            textureEntity.texture.bindTexture(gl);
+            textureMaterial.useProgram();
+            textureMaterial.setUniform('uImage', textureEntity.texture.textureUnit);
+            textureMaterial.setUniform('uScale', textureEntity.texture.width / engine.settings.width, textureEntity.texture.height / engine.settings.height);
+            if (selectedTexture === i) {
+                var pos = v2_1.sum(textureEntity.position, offset);
+                textureMaterial.setUniform('uTranslation', pos.x, pos.y);
+            }
+            else {
+                textureMaterial.setUniform('uTranslation', textureEntity.position.x, textureEntity.position.y);
+            }
+            textureMaterial.drawUsingAttribute('aPosition');
         }
     };
     engine.start();
 };
 
+
+/***/ }),
+
+/***/ "./examples/multi-textures/texture.frag":
+/*!**********************************************!*\
+  !*** ./examples/multi-textures/texture.frag ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nvarying vec2 vTextcoord;\nuniform sampler2D uImage;\n\nvoid main () {\n  gl_FragColor = texture2D(uImage, vTextcoord);\n}\n"
+
+/***/ }),
+
+/***/ "./examples/multi-textures/texture.vert":
+/*!**********************************************!*\
+  !*** ./examples/multi-textures/texture.vert ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "precision mediump float;\nattribute vec2 aPosition;\nattribute vec2 aTextcoord;\nuniform vec2 uTranslation;\nuniform vec2 uScale;\nvarying vec2 vTextcoord;\n\nvoid main () {\n  vTextcoord = aTextcoord;\n  vec2 scaledPosition = aPosition * uScale;\n  vec2 translatedPosition = scaledPosition + uTranslation;\n  vec2 clipspacePosition = (translatedPosition * 2.0 - 1.0) * vec2(1, -1);\n  gl_Position = vec4(clipspacePosition, 0, 1);\n}"
 
 /***/ }),
 
@@ -564,6 +541,35 @@ exports.default = Material;
 
 /***/ }),
 
+/***/ "./src/engine/rectangle.ts":
+/*!*********************************!*\
+  !*** ./src/engine/rectangle.ts ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// A simple AABB
+var Rectangle = /** @class */ (function () {
+    function Rectangle(min, max) {
+        this.min = min;
+        this.max = max;
+    }
+    Rectangle.prototype.intersectsBox = function (that) {
+        return !(this.max[0] < that.min[0] ||
+            this.min[0] > that.max[0] ||
+            this.max[1] < that.min[1] ||
+            this.min[1] > that.max[1]);
+    };
+    return Rectangle;
+}());
+exports.default = Rectangle;
+
+
+/***/ }),
+
 /***/ "./src/engine/texture.ts":
 /*!*******************************!*\
   !*** ./src/engine/texture.ts ***!
@@ -787,4 +793,4 @@ exports.default = VertexAttribute;
 /***/ })
 
 /******/ });
-//# sourceMappingURL=ui-layer.js.map
+//# sourceMappingURL=multi-textures.js.map
