@@ -16,13 +16,13 @@ const listElements = entities.map((entity, i) => {
     e.preventDefault()
     selectedEntity = entities[i]
   })
-  li.append(a)
+  li.appendChild(a)
   return li
 })
-list.append(...listElements)
+listElements.forEach(elem => list.appendChild(elem))
 
 window.onload = () => {
-  document.body.append(list)
+  document.body.appendChild(list)
   const engine = new Engine(<HTMLCanvasElement>document.getElementById('webgl'), {
     fullscreen: true
   })

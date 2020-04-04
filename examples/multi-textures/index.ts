@@ -28,11 +28,9 @@ const makeRandomTextureEntity = (i: number) => {
   c.canvas.width = width
   // We need to do this twice because resetting the canvas width resets fillStyle?
   c.clearRect(0, 0, Math.ceil(c.canvas.width), Math.ceil(c.canvas.height))
-  c.globalAlpha = 0.6
   c.fillStyle = `rgba(0, ${(Math.random() * 156 + 100) | 0}, ${(Math.random() * 156 + 100) |
-    0}, ${43})`
+    0}, 0.6)`
   c.fillRect(0, 0, Math.ceil(c.canvas.width), Math.ceil(c.canvas.height))
-  c.globalAlpha = 1
   c.fillStyle = 'red'
   c.font = '14px sans-serif'
   c.fillText(text, 0, 14)

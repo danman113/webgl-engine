@@ -4,13 +4,6 @@ export enum ShaderTypes {
   Vertex = 'VERTEX'
 }
 
-const UniformTypeToLocation: (gl: WebGLRenderingContext) => { [type: number]: string } = gl => ({
-  [gl.FLOAT]: 'uniform1f',
-  [gl.FLOAT_VEC2]: 'uniform2f',
-  [gl.FLOAT_VEC3]: 'uniform3f',
-  [gl.SAMPLER_2D]: 'uniform1i'
-})
-
 class UniformAttribute {
   constructor(public location: WebGLUniformLocation, public type: number, public size: number) {}
 }
@@ -27,6 +20,16 @@ export default class Material {
   public fragmentShader: WebGLShader
   public program: WebGLProgram
   public uniformLocations: UniformMap = {}
+  private static typeToLocationMap: { [type: number]: string }
+
+  static setTypeToLocationMap = (gl: WebGLRenderingContext) => {
+    Material.typeToLocationMap = {
+      [gl.FLOAT]: 'uniform1f',
+      [gl.FLOAT_VEC2]: 'uniform2f',
+      [gl.FLOAT_VEC3]: 'uniform3f',
+      [gl.SAMPLER_2D]: 'uniform1i'
+    }
+  }
 
   constructor(
     public gl: WebGLRenderingContext,
@@ -34,6 +37,8 @@ export default class Material {
     public fragmentSource: string,
     public attributes: AttributeMap
   ) {
+    if (!Material.typeToLocationMap)
+      Material.setTypeToLocationMap(gl)
     this.vertexShader = this.compileShader(vertexSource, ShaderTypes.Vertex)
     this.fragmentShader = this.compileShader(fragmentSource, ShaderTypes.Fragment)
     this.program = this.initShaderProgram(this.vertexShader, this.fragmentShader)
@@ -70,7 +75,7 @@ export default class Material {
     if (!this.uniformLocations[attrName])
       throw new Error(`Uniform '${attrName}' not referenced in source program`)
     const { location, type } = this.uniformLocations[attrName]
-    ;(<any>this.gl)[UniformTypeToLocation(this.gl)[type]](location, ...rest)
+    ;(<any>this.gl)[Material.typeToLocationMap[type]](location, ...rest)
   }
 
   useProgram = () => this.gl.useProgram(this.program)

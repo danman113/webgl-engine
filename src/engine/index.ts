@@ -16,7 +16,8 @@ export default class Engine {
   public RAF: number
   constructor(public element: HTMLCanvasElement, public settings: EngineSettings) {
     this.setCanvasSize(settings)
-    const gl = (this.gl = this.element.getContext('webgl'))
+    let gl = (this.gl = this.element.getContext('webgl'))
+    if (!gl) gl = this.gl = <WebGLRenderingContext>this.element.getContext('experimental-webgl')
     if (!gl) throw new Error('Could not find webgl context')
     window.addEventListener('resize', () => {
       this.setCanvasSize(settings)
