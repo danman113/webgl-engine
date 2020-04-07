@@ -1,12 +1,13 @@
-import { v2, sum, sub, mult, divide } from './../../src/engine/v2'
+import { v2, sum, sub, mult, divide } from './../../src/math/v2'
 import Engine from '../../src/engine'
 import Material from '../../src/engine/material'
 import VertexAttribute from '../../src/engine/vertexAttribute'
 import { CanvasTexture } from '../../src/engine/texture'
-import { makeOffscreenCanvas } from '../../src/engine/canvas2d'
+import { makeOffscreenCanvas } from '../../src/utils/canvas2d'
 import * as fragmentShader from './texture.frag'
 import * as vertexShader from './texture.vert'
-import Rectangle from '../../src/engine/rectangle'
+import Rectangle from '../../src/math/rectangle'
+import { SimpleRectangle } from '../../src/utils/shapes'
 
 const w = 200
 const h = 100
@@ -63,19 +64,12 @@ window.onload = () => {
       aPosition: new VertexAttribute(
         gl,
         // prettier-ignore
-        new Float32Array([
-            0, 0,
-            1, 0,
-            0, 1, // Left Triangle
-            0, 1,
-            1, 0,
-            1, 1, // Right Triangles
-          ]),
+        SimpleRectangle,
         {
           dimension: 2
         }
       ),
-      aTextcoord: new VertexAttribute(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), {
+      aTextcoord: new VertexAttribute(gl, SimpleRectangle, {
         dimension: 2
       })
     })

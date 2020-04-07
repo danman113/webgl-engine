@@ -1,4 +1,4 @@
-import { v2 } from './v2'
+import { v2 } from '../math/v2'
 
 export interface EngineSettings {
   width?: number

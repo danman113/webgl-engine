@@ -1,13 +1,18 @@
+import { CanvasTexture } from './../../../src/engine/texture';
 import Material from '../../../src/engine/material'
 import VertexAttribute from '../../../src/engine/vertexAttribute'
 import { ImageTexture as Texture } from '../../../src/engine/texture'
 import MaterialExample from '../materialExample'
 import * as FragmentSource from './image.frag'
 import * as VertexSource from './image.vert'
+import * as SimpleImageFragmentShader from '../../../src/shaders/image.frag'
+import * as SimpleImageVertexShader from '../../../src/shaders/image.vert'
 import sheep from '../../assets/sheep.jpg'
 import beach from '../../assets/beach.jpg'
 import food from '../../assets/food.jpg'
 import building from '../../assets/building.jpg'
+import { SimpleRectangle } from '../../../src/utils/shapes'
+import { makeOffscreenCanvas } from '../../../src/utils/canvas2d'
 
 let selectedImageIndex = 0
 const images = [sheep, beach, food, building].map(img => new Texture(img))
@@ -37,71 +42,101 @@ const kernels: { [key: string]: number[] } = {
 }
 const kernelKeys = Object.keys(kernels)
 
+// A little jank in this MaterialExample system. Ideally engine would have one of these built-in
+// but I think it's a little too high overhead as not all examples need this
+let canvasTexture: CanvasTexture
+let UIMaterial: Material
+let context: CanvasRenderingContext2D
+
 const example = new MaterialExample(
   'Image Kernel Example',
   async gl => {
     const mat = new Material(gl, VertexSource, FragmentSource, {
-      aPosition: new VertexAttribute(
-        gl,
-        // prettier-ignore
-        new Float32Array([
-            0, 0,
-            1, 0,
-            0, 1, // Left Triangle
-            0, 1,
-            1, 0,
-            1, 1, // Right Triangles
-          ]),
-        {
-          dimension: 2
-        }
-      ),
-      aTextcoord: new VertexAttribute(
-        gl,
-        // prettier-ignore
-        new Float32Array([
-          0, 0,
-          1, 0,
-          0, 1,
-          0, 1,
-          1, 0,
-          1, 1
-        ]),
-        {
-          dimension: 2
-        }
-      )
+      aPosition: new VertexAttribute(gl, SimpleRectangle, {
+        dimension: 2
+      }),
+      aTextcoord: new VertexAttribute(gl, SimpleRectangle, {
+        dimension: 2
+      })
     })
+
+    context = makeOffscreenCanvas(gl.canvas.width, gl.canvas.height)
+    canvasTexture = new CanvasTexture(context)
+    canvasTexture.setTexture(gl)
+
+    UIMaterial = new Material(gl, SimpleImageVertexShader, SimpleImageFragmentShader, {
+      aPosition: new VertexAttribute(gl, SimpleRectangle, {
+        dimension: 2
+      }),
+      aTextcoord: new VertexAttribute(gl, SimpleRectangle, {
+        dimension: 2
+      })
+    })
+
     await Promise.all(images.map(texture => texture.load))
     images.forEach(texture => texture.setTexture(gl))
     return mat
   },
   (gl, material, engine) => {
-    gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    material.useProgram()
     const selectedImage = images[selectedImageIndex]
-    selectedImage.bindTexture(gl)
     engine.onKeyUp = (_, __, keyCode) => {
       // @TODO: Cleanup with some keycode package
       if (keyCode === 38)
         selectedKernelIndex = selectedKernelIndex ? selectedKernelIndex - 1 : kernelKeys.length - 1
       if (keyCode === 40) selectedKernelIndex = (selectedKernelIndex + 1) % kernelKeys.length
-      if (keyCode === 39)
+      if (keyCode === 37)
         selectedImageIndex = selectedImageIndex ? selectedImageIndex - 1 : images.length - 1
-      if (keyCode === 37) selectedImageIndex = (selectedImageIndex + 1) % images.length
+      if (keyCode === 39) selectedImageIndex = (selectedImageIndex + 1) % images.length
     }
+
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
     const selectedKernelName = kernelKeys[selectedKernelIndex]
     const selectedKernel = kernels[selectedKernelName]
-    const weight = Math.max(
-      selectedKernel.reduce((acc, val) => acc + val),
-      1
-    )
-    material.setUniform('uImage', selectedImage.textureUnit)
-    material.setUniform('uImageResolution', selectedImage.width, selectedImage.height)
-    material.setUniform('uImageKernel[0]', selectedKernel)
-    material.setUniform('uKernelWeight', weight)
-    material.drawUsingAttribute('aPosition')
+    {
+      material.useProgram()
+      selectedImage.bindTexture(gl)
+      const weight = Math.max(
+        selectedKernel.reduce((acc, val) => acc + val),
+        1
+      )
+      material.setUniform('uImage', selectedImage.textureUnit)
+      material.setUniform('uImageResolution', selectedImage.width, selectedImage.height)
+      material.setUniform('uImageKernel[0]', selectedKernel)
+      material.setUniform('uKernelWeight', weight)
+      material.drawUsingAttribute('aPosition')
+    }
+
+    {
+      const { width, height } = engine.settings
+      context.canvas.width = width
+      context.canvas.height = height
+      context.clearRect(0, 0, width, height)
+
+      const baseHeight = height * 0.1
+      const baseWidth = width * 0.5
+      const kernelInfoText = `Selected Filter: ${selectedKernelName}`
+      const imageInfoText = `Selected Image: ${selectedImageIndex}`
+      context.font = '24px sans-serif'
+      context.fillStyle = 'white'
+
+      context.fillText(kernelInfoText, baseWidth + 1, baseHeight + 1)
+      context.fillStyle = 'black'
+      context.fillText(kernelInfoText, baseWidth, baseHeight)
+
+      context.fillStyle = 'white'
+      context.fillText(imageInfoText, baseWidth + 1, baseHeight + 30 + 1)
+      context.fillStyle = 'black'
+      context.fillText(imageInfoText, baseWidth, baseHeight + 30)
+      canvasTexture.rebindTexture(gl)
+
+      UIMaterial.useProgram()
+      UIMaterial.setUniform('uImage', canvasTexture.textureUnit)
+      UIMaterial.drawUsingAttribute('aPosition')
+    }
   }
 )
 

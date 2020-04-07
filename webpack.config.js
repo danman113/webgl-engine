@@ -4,7 +4,7 @@ let HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const outputDir = process.env.outDir || 'docs/'
 const folders = readdirSync(path.normalize('./examples'), { withFileTypes: true })
-  .filter(node => node.isDirectory()).map(node => node.name)
+  .filter(node => node.isDirectory()).map(node => node.name).filter(name => name !== 'assets')
 const entries = folders.reduce((obj, name) => {
   obj[name] = path.resolve(path.join('./examples', name, 'index.ts'))
   return obj

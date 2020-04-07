@@ -2,7 +2,8 @@ import Engine from './../../src/engine'
 import Material from './../../src/engine/material'
 import VertexAttribute from './../../src/engine/vertexAttribute'
 import { CanvasTexture } from './../../src/engine/texture'
-import { makeOffscreenCanvas } from './../../src/engine/canvas2d'
+import { makeOffscreenCanvas } from '../../src/utils/canvas2d'
+import { SimpleRectangle } from '../../src/utils/shapes'
 import mouseGradient from '../materials/mouseGradientExample'
 import * as fragmentShader from './image.frag'
 import * as vertexShader from './image.vert'
@@ -23,19 +24,12 @@ window.onload = () => {
       aPosition: new VertexAttribute(
         gl,
         // prettier-ignore
-        new Float32Array([
-            0, 0,
-            1, 0,
-            0, 1, // Left Triangle
-            0, 1,
-            1, 0,
-            1, 1, // Right Triangles
-          ]),
+        SimpleRectangle,
         {
           dimension: 2
         }
       ),
-      aTextcoord: new VertexAttribute(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), {
+      aTextcoord: new VertexAttribute(gl, SimpleRectangle, {
         dimension: 2
       })
     })
@@ -65,7 +59,6 @@ window.onload = () => {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     for (let entity of entities) {
       entity.useProgram()
-      // @TODO: Get this to work with multiple textures
       if (entity.uniformLocations['uColor'])
         entity.setUniform(
           'uColor',

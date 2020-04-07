@@ -5,6 +5,7 @@ import MaterialExample from '../materialExample'
 import * as FragmentSource from './image.frag'
 import * as VertexSource from './image.vert'
 import image from '../../assets/beach.jpg'
+import { SimpleRectangle } from '../../../src/utils/shapes'
 
 const texture = new Texture(image)
 
@@ -15,14 +16,7 @@ const example = new MaterialExample(
       aPosition: new VertexAttribute(
         gl,
         // prettier-ignore
-        new Float32Array([
-            0, 0,
-            1, 0,
-            0, 1, // Left Triangle
-            0, 1,
-            1, 0,
-            1, 1, // Right Triangles
-          ]),
+        SimpleRectangle,
         {
           dimension: 2
         }
