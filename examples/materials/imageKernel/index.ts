@@ -1,4 +1,4 @@
-import { CanvasTexture } from './../../../src/engine/texture';
+import { CanvasTexture } from './../../../src/engine/texture'
 import Material from '../../../src/engine/material'
 import VertexAttribute from '../../../src/engine/vertexAttribute'
 import { ImageTexture as Texture } from '../../../src/engine/texture'

@@ -36,12 +36,23 @@ const makeRandomTextureEntity = (i: number) => {
   c.font = '14px sans-serif'
   c.fillText(text, 0, 14)
   const texture = new CanvasTexture(c)
-  const textureEntity = new TextureEntity(texture, v2(Math.random(), Math.random()), text)
+  const rotation = Math.random() * 2
+  const textureEntity = new TextureEntity(
+    texture,
+    v2(Math.random(), Math.random()),
+    v2(Math.sin(rotation), Math.cos(rotation)),
+    text
+  )
   return textureEntity
 }
 
 class TextureEntity {
-  constructor(public texture: CanvasTexture, public position: v2, public id: string = 'hi') {}
+  constructor(
+    public texture: CanvasTexture,
+    public position: v2,
+    public rotation: v2,
+    public id: string
+  ) {}
 }
 
 let textureEntities: TextureEntity[] = []
@@ -105,11 +116,22 @@ window.onload = () => {
     }
   }
 
+  let rotation = 0
   engine.draw = (gl, engine) => {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    const x = Math.sin(rotation)
+    const y = Math.cos(rotation)
+
+    if (engine.keys.has(37)) {
+      rotation += 0.02
+    }
+
+    if (engine.keys.has(39)) {
+      rotation -= 0.02
+    }
 
     const sizeVector = v2(engine.settings.width, engine.settings.height)
     const offset = divide(sub(engine.mouse, anchorPoint), sizeVector) // normalize from (0, 0) -> (width, height) => (0, 0) -> (1, 1)
@@ -123,6 +145,13 @@ window.onload = () => {
         textureEntity.texture.width / engine.settings.width,
         textureEntity.texture.height / engine.settings.height
       )
+
+      textureMaterial.setUniform(
+        'uRotation',
+        x,
+        y,
+      )
+
       if (selectedTexture === i) {
         const pos = sum(textureEntity.position, offset)
         textureMaterial.setUniform('uTranslation', pos.x, pos.y)
