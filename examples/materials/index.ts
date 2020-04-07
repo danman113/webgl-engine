@@ -27,9 +27,9 @@ window.onload = () => {
     fullscreen: true
   })
 
-  engine.init = gl => {
+  engine.init = async gl => {
     global.engine = engine
-    entities.forEach(ent => ent.onload(gl))
+    await Promise.all(entities.map(ent => ent.onload(gl)))
   }
 
   engine.draw = (gl, engine) => {

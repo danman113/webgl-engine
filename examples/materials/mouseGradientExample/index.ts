@@ -6,7 +6,7 @@ import * as VertexSource from './mouseGradient.vert'
 
 const example = new MaterialExample(
   'Mouse Gradient',
-  gl =>
+  async gl =>
     new Material(gl, VertexSource, FragmentSource, {
       aPosition: new VertexAttribute(
         gl,

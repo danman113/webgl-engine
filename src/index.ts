@@ -9,7 +9,7 @@ window.onload = () => {
     fullscreen: true
   })
 
-  engine.init = gl => {
+  engine.init = async gl => {
     global.engine = engine
     let simpleMaterial = new Material(
       gl,

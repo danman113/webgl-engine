@@ -7,6 +7,6 @@
     "target": "ES5"
   },
   "include": [
-    "./src/**/*"
+    "./src/**/*", "./examples/**/*", "global.d.ts"
   ]
 }

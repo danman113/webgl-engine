@@ -23,7 +23,7 @@ const PRODUCTION = process.env.NODE_ENV === 'production'
 module.exports = {
   entry: entries,
   output: {
-    filename: '[name].js',
+    filename: '[name].[hash].js', // Kill cache issues
     path: path.join(__dirname, outputDir)
   },
 

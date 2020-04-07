@@ -14,7 +14,7 @@ window.onload = () => {
     fullscreen: true
   })
   let c: CanvasRenderingContext2D, texture: CanvasTexture
-  engine.init = gl => {
+  engine.init = async gl => {
     c = makeOffscreenCanvas(engine.settings.width, engine.settings.height)
     texture = new CanvasTexture(c)
     texture.setTexture(gl)
@@ -39,7 +39,7 @@ window.onload = () => {
         dimension: 2
       })
     })
-    mouseGradient.onload(gl)
+    await mouseGradient.onload(gl)
     entities.push(mouseGradient.material)
     entities.push(textureMaterial)
   }

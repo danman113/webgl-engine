@@ -52,8 +52,8 @@ window.onload = () => {
   })
   ;(<any>window).textureEntities = textureEntities
 
-  engine.init = gl => {
-    for (let i = 0; i < 20; i++) {
+  engine.init = async gl => {
+    for (let i = 0; i < 500; i++) {
       const textureEntity = makeRandomTextureEntity(i)
       textureEntity.texture.setTexture(gl)
       textureEntities.push(textureEntity)
@@ -119,10 +119,10 @@ window.onload = () => {
 
     const sizeVector = v2(engine.settings.width, engine.settings.height)
     const offset = divide(sub(engine.mouse, anchorPoint), sizeVector) // normalize from (0, 0) -> (width, height) => (0, 0) -> (1, 1)
+    textureMaterial.useProgram()
     for (let i = 0; i < textureEntities.length; i++) {
       const textureEntity = textureEntities[i]
       textureEntity.texture.bindTexture(gl)
-      textureMaterial.useProgram()
       textureMaterial.setUniform('uImage', textureEntity.texture.textureUnit)
       textureMaterial.setUniform(
         'uScale',

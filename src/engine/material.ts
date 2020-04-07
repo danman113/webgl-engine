@@ -25,8 +25,13 @@ export default class Material {
   static setTypeToLocationMap = (gl: WebGLRenderingContext) => {
     Material.typeToLocationMap = {
       [gl.FLOAT]: 'uniform1f',
+      [gl.FLOAT * 2]: 'uniform1fv',
       [gl.FLOAT_VEC2]: 'uniform2f',
+      [gl.FLOAT_VEC2 * 2]: 'uniform2fv',
       [gl.FLOAT_VEC3]: 'uniform3f',
+      [gl.FLOAT_VEC3 * 2]: 'uniform3fv',
+      [gl.FLOAT_VEC4]: 'uniform4f',
+      [gl.FLOAT_VEC4 * 2]: 'uniform4fv',
       [gl.SAMPLER_2D]: 'uniform1i'
     }
   }
@@ -37,8 +42,7 @@ export default class Material {
     public fragmentSource: string,
     public attributes: AttributeMap
   ) {
-    if (!Material.typeToLocationMap)
-      Material.setTypeToLocationMap(gl)
+    if (!Material.typeToLocationMap) Material.setTypeToLocationMap(gl)
     this.vertexShader = this.compileShader(vertexSource, ShaderTypes.Vertex)
     this.fragmentShader = this.compileShader(fragmentSource, ShaderTypes.Fragment)
     this.program = this.initShaderProgram(this.vertexShader, this.fragmentShader)
@@ -50,8 +54,13 @@ export default class Material {
     const uniformCount = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
     for (let i = 0; i < uniformCount; i++) {
       const { name: uniformName, type, size } = gl.getActiveUniform(this.program, i)
+      const isArray = size > 1
       const location = this.gl.getUniformLocation(this.program, uniformName)
-      this.uniformLocations[uniformName] = new UniformAttribute(location, type, size)
+      this.uniformLocations[uniformName] = new UniformAttribute(
+        location,
+        type * (1 + +isArray),
+        size
+      )
     }
   }
 

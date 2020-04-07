@@ -4,10 +4,10 @@ export default class MaterialExample {
   material: Material
   constructor(
     public name: string,
-    public setup: (gl: WebGLRenderingContext) => Material,
+    public setup: (gl: WebGLRenderingContext) => Promise<Material>,
     public draw: (gl: WebGLRenderingContext, material: Material, engine: Engine) => void
   ) {}
-  onload(gl: WebGLRenderingContext) {
-    this.material = this.setup(gl)
+  async onload(gl: WebGLRenderingContext) {
+    this.material = await this.setup(gl)
   }
 }

@@ -72,17 +72,27 @@ export class ImageTexture extends Texture {
   public image: HTMLImageElement
   public loaded: boolean = false
   public texture: TexImageSource
+  public load: Promise<ImageTexture>
   constructor(public source: string) {
     super()
     const image = new Image()
     image.src = source
     this.width = image.width
     this.height = image.height
-    image.onload = () => {
-      this.loaded = true
-      this.width = image.width
-      this.height = image.height
-    }
+    this.load = new Promise((resolve, reject) => {
+      image.onload = () => {
+        this.loaded = true
+        this.width = image.width
+        this.height = image.height
+        resolve(this)
+      }
+      image.onerror = e => {
+        this.loaded = false
+        this.width = image.width
+        this.height = image.height
+        reject(e)
+      }
+    })
     this.texture = image
   }
 }

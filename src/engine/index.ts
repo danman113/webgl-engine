@@ -121,13 +121,13 @@ export default class Engine {
     window.requestAnimationFrame(this.render)
   }
 
-  start = () => {
-    this.init(this.gl, this)
+  start = async () => {
+    await this.init(this.gl, this)
     this.RAF = requestAnimationFrame(this.render)
   }
 
   draw = (gl: WebGLRenderingContext, e: Engine) => {}
-  init = (gl: WebGLRenderingContext, e: Engine) => {}
+  init = async (gl: WebGLRenderingContext, e: Engine) => {}
   onResize = (gl: WebGLRenderingContext, e: Engine) => {}
   onClick = (gl: WebGLRenderingContext, e: Engine) => {}
   onMouseDown = (gl: WebGLRenderingContext, e: Engine) => {}

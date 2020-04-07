@@ -4,13 +4,13 @@ import { ImageTexture as Texture } from '../../../src/engine/texture'
 import MaterialExample from '../materialExample'
 import * as FragmentSource from './image.frag'
 import * as VertexSource from './image.vert'
-import image from './img.jpg'
+import image from '../../assets/beach.jpg'
 
 const texture = new Texture(image)
 
 const example = new MaterialExample(
   'Texture Example',
-  gl => {
+  async gl => {
     const mat = new Material(gl, VertexSource, FragmentSource, {
       aPosition: new VertexAttribute(
         gl,
@@ -31,6 +31,7 @@ const example = new MaterialExample(
         dimension: 2
       })
     })
+    await texture.load
     texture.setTexture(gl)
     return mat
   },
