@@ -116,21 +116,27 @@ const example = new MaterialExample(
       context.canvas.height = height
       context.clearRect(0, 0, width, height)
 
-      const baseHeight = height * 0.1
-      const baseWidth = width * 0.5
-      const kernelInfoText = `Selected Filter: ${selectedKernelName}`
-      const imageInfoText = `Selected Image: ${selectedImageIndex}`
+      const textBoxes = [
+        `Use the top and bottom arrow keys to select a separate filter`,
+        `Use the left and right arrow keys to swap images`,
+        `Selected Filter: ${selectedKernelName}`,
+        `Selected Image: ${selectedImageIndex}`
+      ]
+      const textHeight = 30
+
+      let baseHeight = height - textBoxes.length * textHeight
+      let baseWidth = width * 0.25
+
       context.font = '24px sans-serif'
-      context.fillStyle = 'white'
 
-      context.fillText(kernelInfoText, baseWidth + 1, baseHeight + 1)
-      context.fillStyle = 'black'
-      context.fillText(kernelInfoText, baseWidth, baseHeight)
+      for (let text of textBoxes) {
+        context.fillStyle = 'white'
+        context.fillText(text, baseWidth + 1, baseHeight + 1)
+        context.fillStyle = 'black'
+        context.fillText(text, baseWidth, baseHeight)
+        baseHeight += textHeight
+      }
 
-      context.fillStyle = 'white'
-      context.fillText(imageInfoText, baseWidth + 1, baseHeight + 30 + 1)
-      context.fillStyle = 'black'
-      context.fillText(imageInfoText, baseWidth, baseHeight + 30)
       canvasTexture.rebindTexture(gl)
 
       UIMaterial.useProgram()
