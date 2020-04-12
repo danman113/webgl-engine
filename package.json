@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "gl-matrix": "^2.8.1",
+    "keycode": "^2.2.0",
     "lodash": "^4.17.15"
   }
 }

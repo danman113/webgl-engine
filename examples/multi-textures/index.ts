@@ -1,4 +1,6 @@
-import { v2, sum, sub, mult, divide } from './../../src/math/v2'
+import * as keycode from 'keycode'
+import { v2, sum, sub, mult, divide, scalarMultiply } from './../../src/math/v2'
+import { identity, translation, scale, rotation, multiplication } from './../../src/math/mat3'
 import Engine from '../../src/engine'
 import Material from '../../src/engine/material'
 import VertexAttribute from '../../src/engine/vertexAttribute'
@@ -23,8 +25,9 @@ const makeRandomTextureEntity = (i: number) => {
     .map(_ => alphabet[Math.floor(Math.random() * alphabet.length)])
     .join('')
   const text = `${randomString}: ${i}`
+  const textHeight = 14
 
-  c.font = '14px sans-serif'
+  c.font = `${textHeight}px sans-serif`
   const { width } = c.measureText(text)
   c.canvas.width = width
   // We need to do this twice because resetting the canvas width resets fillStyle?
@@ -33,8 +36,8 @@ const makeRandomTextureEntity = (i: number) => {
     0}, 0.6)`
   c.fillRect(0, 0, Math.ceil(c.canvas.width), Math.ceil(c.canvas.height))
   c.fillStyle = 'red'
-  c.font = '14px sans-serif'
-  c.fillText(text, 0, 14)
+  c.font = `${textHeight}px sans-serif`
+  c.fillText(text, 0, textHeight)
   const texture = new CanvasTexture(c)
   const rotation = Math.random() * 2
   const textureEntity = new TextureEntity(
@@ -62,7 +65,9 @@ window.onload = () => {
   const engine = new Engine(<HTMLCanvasElement>document.getElementById('webgl'), {
     fullscreen: true
   })
+  ;(<any>window).engine = engine
   ;(<any>window).textureEntities = textureEntities
+  ;(<any>window).keycode = keycode
 
   engine.init = async gl => {
     for (let i = 0; i < 500; i++) {
@@ -116,21 +121,29 @@ window.onload = () => {
     }
   }
 
-  let rotation = 0
+  let rotated = 0
+  let rotationAnchorPoint = v2(-0.5, -0.5)
   engine.draw = (gl, engine) => {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    const x = Math.sin(rotation)
-    const y = Math.cos(rotation)
 
-    if (engine.keys.has(37)) {
-      rotation += 0.02
+    if (engine.keys.has(keycode('left'))) {
+      rotated += 0.02
     }
 
-    if (engine.keys.has(39)) {
-      rotation -= 0.02
+    if (engine.keys.has(keycode('right'))) {
+      rotated -= 0.02
+    }
+
+    for (let i = 1; i < 10; i++) {
+      if (engine.keys.has(keycode(String(i)))) {
+        const zeroBased = i - 1
+        const anchorX = Math.floor(zeroBased % 3) / 2
+        const anchorY = Math.floor(zeroBased / 3) / 2
+        rotationAnchorPoint = v2(-anchorX, anchorY - 1)
+      }
     }
 
     const sizeVector = v2(engine.settings.width, engine.settings.height)
@@ -140,28 +153,30 @@ window.onload = () => {
       const textureEntity = textureEntities[i]
       textureEntity.texture.bindTexture(gl)
       textureMaterial.setUniform('uImage', textureEntity.texture.textureUnit)
-      textureMaterial.setUniform(
-        'uScale',
-        textureEntity.texture.width / engine.settings.width,
-        textureEntity.texture.height / engine.settings.height
-      )
 
-      textureMaterial.setUniform(
-        'uRotation',
-        x,
-        y,
-      )
-
+      let translationMatrix
       if (selectedTexture === i) {
         const pos = sum(textureEntity.position, offset)
-        textureMaterial.setUniform('uTranslation', pos.x, pos.y)
+        translationMatrix = translation(pos)
       } else {
-        textureMaterial.setUniform(
-          'uTranslation',
-          textureEntity.position.x,
-          textureEntity.position.y
-        )
+        translationMatrix = translation(textureEntity.position)
       }
+      const rotationMatrix = rotation(rotated)
+      const scaleMatrix = scale(
+        v2(
+          textureEntity.texture.width / engine.settings.width,
+          textureEntity.texture.height / engine.settings.height
+        )
+      )
+
+      let matrix = translationMatrix
+      matrix = multiplication(matrix, translation(mult(rotationAnchorPoint, v2(-scaleMatrix[0], -scaleMatrix[4]))))
+      matrix = multiplication(matrix, rotationMatrix)
+      matrix = multiplication(matrix, scaleMatrix)
+      matrix = multiplication(matrix, translation(rotationAnchorPoint)) //
+
+      textureMaterial.setUniform('uMatrix', false, matrix)
+
       textureMaterial.drawUsingAttribute('aPosition')
     }
   }

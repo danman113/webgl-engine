@@ -32,6 +32,9 @@ export default class Material {
       [gl.FLOAT_VEC3 * 2]: 'uniform3fv',
       [gl.FLOAT_VEC4]: 'uniform4f',
       [gl.FLOAT_VEC4 * 2]: 'uniform4fv',
+      [gl.FLOAT_MAT2]: 'uniformMatrix2fv',
+      [gl.FLOAT_MAT3]: 'uniformMatrix3fv',
+      [gl.FLOAT_MAT4]: 'uniformMatrix4fv',
       [gl.SAMPLER_2D]: 'uniform1i'
     }
   }
