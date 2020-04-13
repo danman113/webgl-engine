@@ -6,13 +6,15 @@ interface VertexAttributeMetadata {
   offset?: number
 }
 
+type bufferType = Float32Array | Uint32Array | Uint8Array
+
 export default class VertexAttribute {
   public buffer: WebGLBuffer
   public vertexAttributeMetadata: VertexAttributeMetadata
   public location: GLenum = null
   constructor(
     gl: WebGLRenderingContext,
-    public data: Float32Array,
+    public data: bufferType,
     {
       dimension,
       type = gl.FLOAT,

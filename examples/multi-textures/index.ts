@@ -170,7 +170,10 @@ window.onload = () => {
       )
 
       let matrix = translationMatrix
-      matrix = multiplication(matrix, translation(mult(rotationAnchorPoint, v2(-scaleMatrix[0], -scaleMatrix[4]))))
+      matrix = multiplication(
+        matrix,
+        translation(mult(rotationAnchorPoint, v2(-scaleMatrix[0], -scaleMatrix[4])))
+      )
       matrix = multiplication(matrix, rotationMatrix)
       matrix = multiplication(matrix, scaleMatrix)
       matrix = multiplication(matrix, translation(rotationAnchorPoint)) //

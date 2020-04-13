@@ -25,6 +25,13 @@ export default class Material {
   static setTypeToLocationMap = (gl: WebGLRenderingContext) => {
     Material.typeToLocationMap = {
       [gl.FLOAT]: 'uniform1f',
+      [gl.INT]: 'uniform1i',
+      [gl.INT_VEC2]: 'uniform2i',
+      [gl.INT_VEC2 * 2]: 'uniform2iv',
+      [gl.INT_VEC3]: 'uniform3i',
+      [gl.INT_VEC3 * 2]: 'uniform3iv',
+      [gl.INT_VEC4]: 'uniform4i',
+      [gl.INT_VEC4 * 2]: 'uniform4iv',
       [gl.FLOAT * 2]: 'uniform1fv',
       [gl.FLOAT_VEC2]: 'uniform2f',
       [gl.FLOAT_VEC2 * 2]: 'uniform2fv',
