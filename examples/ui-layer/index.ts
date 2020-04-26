@@ -39,7 +39,7 @@ window.onload = () => {
   }
   let x = 0
   const resolutionScale = 1
-  engine.draw = (gl, engine) => {
+  engine.draw = (gl, engine, dt) => {
     {
       c.canvas.width = engine.settings.width * resolutionScale
       c.canvas.height = engine.settings.height * resolutionScale
@@ -48,9 +48,37 @@ window.onload = () => {
       // c.fillRect(0, 0, engine.settings.width * resolutionScale, engine.settings.height * resolutionScale)
       c.fillStyle = 'red'
       x += 0.25
-      c.fillRect(engine.mouse.x * resolutionScale, engine.mouse.y * resolutionScale, 40, 90)
+      // c.fillRect(engine.mouse.x * resolutionScale, engine.mouse.y * resolutionScale, 40, 90)
       c.font = '32px sans-serif'
       c.fillText('Hello Canvas', 100 + x, 32)
+      c.fillText(String(dt), 0, 32)
+      c.fillText(
+        String(engine.mouse.x * resolutionScale) + ', ' + String(engine.mouse.y * resolutionScale),
+        engine.mouse.x * resolutionScale,
+        engine.mouse.y * resolutionScale
+      )
+      c.beginPath()
+      const segments = Math.floor((engine.mouse.x / engine.settings.width) * 50) + 3
+      const radius = 400
+      const z = (engine.mouse.y / engine.settings.height) * Math.PI
+      const points: number[][] = []
+      for (let i = 0; i < segments; i++) {
+        const x = Math.cos((Math.PI * 2 * i) / segments) * radius * Math.sin(z)
+        const y = Math.sin((Math.PI * 2 * i) / segments) * radius * Math.sin(z)
+        points.push([x, y])
+      }
+      const offsetX = radius
+      const offsetY = radius
+      for (let i = 0; i < points.length; i++) {
+        const [x, y] = points[i]
+        if (i === 0) {
+          c.moveTo(x + offsetX, y + offsetY)
+        } else {
+          c.lineTo(x + offsetX, y + offsetY)
+        }
+      }
+      c.lineTo(points[0][0] + offsetX, points[0][1] + offsetY)
+      c.stroke()
       texture.rebindTexture(gl)
     }
     gl.clearColor(0, 0, 0, 0)
