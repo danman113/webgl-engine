@@ -28,6 +28,36 @@ const yProperty = { get: gety, set: sety }
 if (!(<any>Array.prototype).x) {
   Object.defineProperty(Array.prototype, 'x', xProperty)
   Object.defineProperty(Array.prototype, 'y', yProperty)
+  Object.defineProperty(Array.prototype, 'add', {
+    value: function(target: v2) {
+      this[0] += target[0]
+      this[1] += target[1]
+      return this
+    }
+  })
+
+  Object.defineProperty(Array.prototype, 'sub', {
+    value: function(target: v2) {
+      this[0] -= target[0]
+      this[1] -= target[1]
+      return this
+    }
+  })
+
+  Object.defineProperty(Array.prototype, 'magnitude', {
+    value: function() {
+      return magnitude(this)
+    }
+  })
+
+  Object.defineProperty(Array.prototype, 'normalize', {
+    value: function(target: v2) {
+      const dist = distance(ZERO, target)
+      this[0] /= dist
+      this[1] /= dist
+      return this
+    }
+  })
 }
 
 export const v2 = (x = 0, y = 0): v2 => [x, y]
@@ -65,7 +95,7 @@ export const sub = (a: v2, b: v2): v2 => v2(a.x - b.x, a.y - b.y)
 export const mult = (a: v2, b: v2): v2 => v2(a.x * b.x, a.y * b.y)
 export const divide = (a: v2, b: v2): v2 => v2(a.x / b.x, a.y / b.y)
 
-export const unit = (a: v2): v2 => {
+export const normalize = (a: v2): v2 => {
   const dist = distance(ZERO, a)
   return v2(a.x / dist, a.y / dist)
 }
@@ -77,6 +107,8 @@ export const normal = (p0: v2, p1: v2): v2 => {
   // orthoginal(sub(p1, p0))
   return v2(-dy, dx)
 }
+
+export const cross = normal
 
 export const orthogonal = (v: v2): v2 => v2(-v.y, v.x)
 

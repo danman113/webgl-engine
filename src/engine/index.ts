@@ -4,22 +4,28 @@ export interface EngineSettings {
   width?: number
   height?: number
   fullscreen?: boolean
+  fps?: number
 }
 
 export default class Engine {
   public gl: WebGLRenderingContext
   public mouse: v2 = v2()
+  // TOOD: Maybe combine these?
+  public mouseMovement: v2 = v2()
   public mouseButtons: boolean[] = Array()
+  private mouseMoved = false
   public keys: Set<number> = new Set()
   public touches: v2[] = []
 
   public RAF: number
   constructor(public element: HTMLCanvasElement, public settings: EngineSettings) {
+    settings.fps = settings.fps || 60
     this.setCanvasSize(settings)
     let gl = (this.gl = this.element.getContext('webgl'))
     if (!gl) gl = this.gl = <WebGLRenderingContext>this.element.getContext('experimental-webgl')
     if (!gl) throw new Error('Could not find webgl context')
     window.addEventListener('resize', () => {
+      // TODO: Fix this in relation to 3d camera example
       this.setCanvasSize(settings)
       // Sets internal webgl viewport to be the size of the canvas
       gl.viewport(0, 0, settings.width, settings.height)
@@ -27,10 +33,14 @@ export default class Engine {
     })
 
     element.addEventListener('mousemove', e => {
-      if (e.offsetX) {
+      this.mouseMoved = true
+      if (e.offsetX || e.offsetY) {
         this.mouse.x = e.offsetX
         this.mouse.y = e.offsetY
       }
+
+      this.mouseMovement.x = e.movementX || 0
+      this.mouseMovement.y = e.movementY || 0
     })
 
     element.addEventListener('mousedown', e => {
@@ -116,8 +126,16 @@ export default class Engine {
     this.touches = [...(e.touches as any)].map(touch => v2(touch.pageX, touch.pageY))
   }
 
-  render = () => {
-    this.draw(this.gl, this)
+  private then: number = 0
+  render = (now: number) => {
+    const dt = (now - this.then) / (1000 / this.settings.fps)
+    this.then = now
+    this.draw(this.gl, this, dt)
+    if (this.mouseMoved) {
+      this.mouseMovement.x = 0
+      this.mouseMovement.y = 0
+      this.mouseMoved = false
+    }
     window.requestAnimationFrame(this.render)
   }
 
@@ -126,7 +144,7 @@ export default class Engine {
     this.RAF = requestAnimationFrame(this.render)
   }
 
-  draw = (gl: WebGLRenderingContext, e: Engine) => {}
+  draw = (gl: WebGLRenderingContext, e: Engine, dt: number) => {}
   init = async (gl: WebGLRenderingContext, e: Engine) => {}
   onResize = (gl: WebGLRenderingContext, e: Engine) => {}
   onClick = (gl: WebGLRenderingContext, e: Engine) => {}
